@@ -36,12 +36,15 @@ afterEvaluate {
     applyFrom(Dependency.unibreak)
   }
 
+  val buildAll by tasks.register<Task>("buildAll")
+
   for (platform in platforms) {
 
     tasks.register(
       name = "build[${platform.name}][${platform.arch.name}]",
       type = AutoBuildTask::class
     ) {
+      buildAll.dependsOn(this)
       this.dependency = Dependency.unibreak
       this.platform = platform
       this.arguments = arrayOf(

@@ -37,11 +37,14 @@ afterEvaluate {
     applyFrom(Dependency.dovi)
   }
 
+  val buildAll by tasks.register<Task>("buildAll")
+
   for (platform in platforms) {
 
     tasks.register<DefaultTask>(
-      name = "cargo[${platform.name}][${platform.arch.name}]",
+      name = "build[${platform.name}][${platform.arch.name}]",
     ) {
+      buildAll.dependsOn(this)
       val context = buildContext(Dependency.dovi, platform)
       doLast {
         execExpectingSuccess {

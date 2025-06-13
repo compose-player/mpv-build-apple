@@ -35,11 +35,14 @@ afterEvaluate {
     applyFrom(Dependency.harfbuzz)
   }
 
+  val buildAll by tasks.register<Task>("buildAll")
+
   for (platform in platforms) {
     tasks.register(
       name = "build[${platform.name}][${platform.arch.name}]",
       type = AutoBuildTask::class,
     ) {
+      buildAll.dependsOn(this)
       this.platform = platform
       this.dependency = Dependency.harfbuzz
       this.arguments = arrayOf(

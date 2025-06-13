@@ -35,11 +35,14 @@ afterEvaluate {
     applyFrom(Dependency.mbedtls)
   }
 
+  val buildAll by tasks.register<Task>("buildAll")
+
   for (platform in platforms) {
     tasks.register(
       type = AutoBuildTask::class,
       name = "build[${platform.name}][${platform.arch.name}]",
     ) {
+      buildAll.dependsOn(this)
       arguments = arrayOf("-DUSE_SHARED_MBEDTLS_LIBRARY=ON")
     }
 

@@ -28,18 +28,13 @@
             <option value="$PROJECT_DIR$/ffmpeg" />
             <option value="$PROJECT_DIR$/freetype" />
             <option value="$PROJECT_DIR$/fribidi" />
-            <option value="$PROJECT_DIR$/gnutls" />
             <option value="$PROJECT_DIR$/harfbuzz" />
-            <option value="$PROJECT_DIR$/iconv" />
             <option value="$PROJECT_DIR$/mbedtls" />
             <option value="$PROJECT_DIR$/mpv" />
-            <option value="$PROJECT_DIR$/nfs" />
             <option value="$PROJECT_DIR$/placebo" />
-            <option value="$PROJECT_DIR$/png" />
             <option value="$PROJECT_DIR$/uchardet" />
             <option value="$PROJECT_DIR$/unibreak" />
             <option value="$PROJECT_DIR$/vulkan" />
-            <option value="$PROJECT_DIR$/xml2" />
           </set>
         </option>
         <option name="resolveExternalAnnotations" value="true" />

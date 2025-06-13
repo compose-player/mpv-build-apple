@@ -40,8 +40,8 @@ afterEvaluate {
     }
   }
 
-  val buildShaderC by tasks.register("buildShaderC", Task::class)
-  val buildSpirvCross by tasks.register("buildSpirvCross", Task::class)
+  val buildAllShaderc by tasks.register("buildAllShaderc", Task::class)
+  val buildAllSpirvCross by tasks.register("buildAllSpirvCross", Task::class)
 
   val dependencies = listOf(
     Dependency.moltenvk,
@@ -65,7 +65,6 @@ afterEvaluate {
 
   for (platform in platforms) {
 
-    //todo: done
     val shaderc = tasks.register(
       name = "buildShaderC[${platform.name}][${platform.arch.name}]",
       type = AutoBuildTask::class,
@@ -109,7 +108,6 @@ afterEvaluate {
       },
     )
 
-    //todo: done
     val spirvcross = tasks.register(
       name = "buildSpirvCross[${platform.name}][${platform.arch.name}]",
       type = AutoBuildTask::class,
@@ -145,6 +143,9 @@ afterEvaluate {
         }
       }
     )
+
+    buildAllShaderc.dependsOn(shaderc)
+    buildAllSpirvCross.dependsOn(spirvcross)
 
   }
 
