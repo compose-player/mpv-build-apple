@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="GradleMigrationSettings" migrationVersion="1" />
+  <component name="GradleSettings">
+    <option name="linkedExternalProjectsSettings">
+      <GradleProjectSettings>
+        <compositeConfiguration>
+          <compositeBuild compositeDefinitionSource="SCRIPT">
+            <builds>
+              <build path="$PROJECT_DIR$/buildSrc" name="buildSrc">
+                <projects>
+                  <project path="$PROJECT_DIR$/buildSrc" />
+                </projects>
+              </build>
+            </builds>
+          </compositeBuild>
+        </compositeConfiguration>
+        <option name="delegatedBuild" value="false" />
+        <option name="distributionType" value="WRAPPED" />
+        <option name="externalProjectPath" value="$PROJECT_DIR$" />
+        <option name="modules">
+          <set>
+            <option value="$PROJECT_DIR$" />
+            <option value="$PROJECT_DIR$/ass" />
+            <option value="$PROJECT_DIR$/buildSrc" />
+            <option value="$PROJECT_DIR$/dav1d" />
+            <option value="$PROJECT_DIR$/dovi" />
+            <option value="$PROJECT_DIR$/ffmpeg" />
+            <option value="$PROJECT_DIR$/freetype" />
+            <option value="$PROJECT_DIR$/fribidi" />
+            <option value="$PROJECT_DIR$/gnutls" />
+            <option value="$PROJECT_DIR$/harfbuzz" />
+            <option value="$PROJECT_DIR$/iconv" />
+            <option value="$PROJECT_DIR$/mbedtls" />
+            <option value="$PROJECT_DIR$/mpv" />
+            <option value="$PROJECT_DIR$/nfs" />
+            <option value="$PROJECT_DIR$/placebo" />
+            <option value="$PROJECT_DIR$/png" />
+            <option value="$PROJECT_DIR$/uchardet" />
+            <option value="$PROJECT_DIR$/unibreak" />
+            <option value="$PROJECT_DIR$/vulkan" />
+            <option value="$PROJECT_DIR$/xml2" />
+          </set>
+        </option>
+        <option name="resolveExternalAnnotations" value="true" />
+      </GradleProjectSettings>
+    </option>
+  </component>
+</project>

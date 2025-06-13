@@ -1,0 +1,8 @@
+[versions]
+jdk = "22"
+kotlin = "2.1.20"
+library = "0.0.1"
+
+[plugins]
+kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
+kotlin-dsl = { id = "org.gradle.kotlin.kotlin-dsl", version = "5.2.0" }
