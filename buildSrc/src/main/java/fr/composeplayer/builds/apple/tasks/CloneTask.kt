@@ -6,10 +6,8 @@ import fr.composeplayer.builds.apple.misc.repoUrl
 import fr.composeplayer.builds.apple.misc.versionName
 import fr.composeplayer.builds.apple.utils.execExpectingSuccess
 import org.gradle.api.DefaultTask
-import org.gradle.api.GradleException
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.TaskAction
-import org.gradle.internal.impldep.bsh.commands.dir
 import org.gradle.process.ExecOperations
 import java.io.File
 import javax.inject.Inject

@@ -1,6 +1,5 @@
 package fr.composeplayer.builds.apple.misc
 
-import fr.composeplayer.builds.apple.tasks.CreateFramework
 import fr.composeplayer.builds.apple.utils.add
 
 @Suppress("EnumEntryName")

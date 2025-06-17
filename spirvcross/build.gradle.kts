@@ -1,5 +1,4 @@
 import fr.composeplayer.builds.apple.misc.Dependency
-import fr.composeplayer.builds.apple.misc.host
 import fr.composeplayer.builds.apple.misc.versionName
 import fr.composeplayer.builds.apple.tasks.buildContext
 import fr.composeplayer.builds.apple.utils.DEFAULT_TARGETS

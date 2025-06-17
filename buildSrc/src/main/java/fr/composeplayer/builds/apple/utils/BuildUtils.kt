@@ -1,17 +1,7 @@
 package fr.composeplayer.builds.apple.utils
 
-import fr.composeplayer.builds.apple.misc.Architecture
-import fr.composeplayer.builds.apple.misc.BuildTarget
-import fr.composeplayer.builds.apple.misc.Dependency
-import fr.composeplayer.builds.apple.misc.Platform
-import fr.composeplayer.builds.apple.misc.frameworks
-import fr.composeplayer.builds.apple.misc.sdk
-import fr.composeplayer.builds.apple.misc.targetCpu
-import fr.composeplayer.builds.apple.tasks.AutoBuildTask
-import fr.composeplayer.builds.apple.tasks.CloneTask
-import fr.composeplayer.builds.apple.tasks.CreateFramework
-import fr.composeplayer.builds.apple.tasks.CreateXcFramework
-import fr.composeplayer.builds.apple.tasks.applyFrom
+import fr.composeplayer.builds.apple.misc.*
+import fr.composeplayer.builds.apple.tasks.*
 import org.gradle.api.GradleException
 import org.gradle.api.Project
 import org.gradle.api.Task
@@ -19,9 +9,6 @@ import org.gradle.kotlin.dsl.getValue
 import org.gradle.process.ExecOperations
 import org.gradle.process.ExecSpec
 import java.io.File
-import kotlin.collections.component1
-import kotlin.collections.component2
-import kotlin.collections.iterator
 import kotlin.concurrent.thread
 
 val BUILD_VERSION = "1.0.0"

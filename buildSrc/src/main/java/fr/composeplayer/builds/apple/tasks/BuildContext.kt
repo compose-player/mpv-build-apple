@@ -1,7 +1,8 @@
 package fr.composeplayer.builds.apple.tasks
 
+import fr.composeplayer.builds.apple.misc.BuildTarget
 import fr.composeplayer.builds.apple.misc.Dependency
-import fr.composeplayer.builds.apple.misc.*
+import fr.composeplayer.builds.apple.misc.flagsDependencelibrarys
 import fr.composeplayer.builds.apple.utils.cFlags
 import fr.composeplayer.builds.apple.utils.ldFlags
 import org.gradle.api.Project

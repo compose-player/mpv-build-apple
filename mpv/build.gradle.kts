@@ -1,11 +1,7 @@
 import fr.composeplayer.builds.apple.misc.Dependency
 import fr.composeplayer.builds.apple.misc.Platform
 import fr.composeplayer.builds.apple.tasks.args
-import fr.composeplayer.builds.apple.utils.DEFAULT_TARGETS
-import fr.composeplayer.builds.apple.utils.add
-import fr.composeplayer.builds.apple.utils.deploymentTarget
-import fr.composeplayer.builds.apple.utils.isysroot
-import fr.composeplayer.builds.apple.utils.registerBasicWorkflow
+import fr.composeplayer.builds.apple.utils.*
 
 plugins {
   kotlin("jvm")

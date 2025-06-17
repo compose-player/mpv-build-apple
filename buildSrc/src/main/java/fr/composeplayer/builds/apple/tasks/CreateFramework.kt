@@ -1,20 +1,14 @@
 package fr.composeplayer.builds.apple.tasks
 
 import fr.composeplayer.builds.apple.misc.Architecture
-import fr.composeplayer.builds.apple.misc.BuildTarget
 import fr.composeplayer.builds.apple.misc.Dependency
 import fr.composeplayer.builds.apple.misc.Platform
-import fr.composeplayer.builds.apple.misc.frameworkExcludeHeaders
-import fr.composeplayer.builds.apple.misc.frameworks
 import fr.composeplayer.builds.apple.misc.sdk
 import fr.composeplayer.builds.apple.utils.BUILD_VERSION
-import fr.composeplayer.builds.apple.utils.execExpectingSuccess
-import fr.composeplayer.builds.apple.utils.exists
 import fr.composeplayer.builds.apple.utils.minVersion
 import org.gradle.api.DefaultTask
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.TaskAction
-import java.io.File
 
 
 open class CreateFramework : DefaultTask() {
