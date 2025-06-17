@@ -19,6 +19,7 @@ open class CreateXcFramework : DefaultTask() {
 
   @TaskAction
   fun execute() {
+    return
     for (framework in dependency.frameworks) {
       val arguments = buildList {
         add("xcodebuild", "-create-xcframework")

@@ -12,6 +12,7 @@ fun Task.buildContext(dep: Dependency, target: BuildTarget): BuildContext {
   return BuildContext(project, dep, target)
 }
 
+
 class BuildContext(
   val project: Project,
   val dependency: Dependency,
@@ -19,7 +20,10 @@ class BuildContext(
 ) {
   val sourceDir = File(project.rootDir, "vendor/${dependency.name}")
   val buildDir = File(project.rootDir, "builds/${buildTarget.platform.name}/${buildTarget.arch.name}/${dependency.name}/")
-  val prefixDir = File(project.rootDir, "binaries/${buildTarget.platform.name}/${buildTarget.arch.name}")
+  //val prefixDir = File(project.rootDir, "binaries/${buildTarget.platform.name}/${buildTarget.arch.name}")
+
+  val prefixDir = project.rootDir.resolve("dist/$dependency/${buildTarget.platform}/${buildTarget.arch}")
+
   operator fun component1(): File = sourceDir
   operator fun component2(): File = buildDir
 

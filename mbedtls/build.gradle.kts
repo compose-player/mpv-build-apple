@@ -12,14 +12,10 @@ version = libs.versions.library
 repositories { mavenCentral() }
 kotlin { jvmToolchain(23) }
 
-afterEvaluate {
-
-  registerBasicWorkflow(
-    targets = DEFAULT_TARGETS,
-    dependency = Dependency.mbedtls,
-    build = {
-      this.arguments = arrayOf("-DUSE_SHARED_MBEDTLS_LIBRARY=ON")
-    },
-  )
-
-}
+registerBasicWorkflow(
+  targets = DEFAULT_TARGETS,
+  dependency = Dependency.mbedtls,
+  build = {
+    this.arguments = arrayOf("-DUSE_SHARED_MBEDTLS_LIBRARY=ON")
+  },
+)

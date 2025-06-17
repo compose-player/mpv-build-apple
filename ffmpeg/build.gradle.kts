@@ -1,6 +1,5 @@
 import fr.composeplayer.builds.apple.misc.Architecture
 import fr.composeplayer.builds.apple.misc.Dependency
-import fr.composeplayer.builds.apple.misc.Platform
 import fr.composeplayer.builds.apple.misc.cpuFamily
 import fr.composeplayer.builds.apple.tasks.args
 import fr.composeplayer.builds.apple.tasks.buildContext
@@ -18,104 +17,98 @@ version = libs.versions.library
 repositories { mavenCentral() }
 kotlin { jvmToolchain(23) }
 
-afterEvaluate {
+val dep = Dependency.ffmpeg
 
-  val dependency = Dependency.ffmpeg
+registerBasicWorkflow(
+  dependency = dep,
+  targets = DEFAULT_TARGETS,
+  prebuild = { enabled = false },
+  build = {
+    this.args = buildList {
+      addAll(ffmpegConfigurers)
+      add(
+        "--disable-debug",
+        "--enable-stripping",
+        "--enable-optimizations",
+        "--disable-large-tests",
+        "--ignore-tests=TESTS",
+        "--arch=${buildTarget.get().arch.cpuFamily}",
+        "--target-os=darwin",
+      )
 
-  registerBasicWorkflow(
-    dependency = dependency,
-    targets = DEFAULT_TARGETS,
-    prebuild = { enabled = false },
-    build = {
-      this.args = buildList {
-        addAll(ffmpegConfigurers)
-        add(
-          "--disable-debug",
-          "--enable-stripping",
-          "--enable-optimizations",
-          "--disable-large-tests",
-          "--ignore-tests=TESTS",
-          "--arch=${buildTarget.get().arch.cpuFamily}",
-          "--target-os=darwin",
-        )
-
-        if (buildTarget.get().arch == Architecture.x86_64) {
-          add("--disable-neon", "--disable-asm")
-        } else {
-          add("--enable-neon", "--enable-asm")
-        }
-        add("--disable-programs")
-
-
-        val dependencyLibrary = listOf(
-          "mbedtls",
-          "libfreetype",
-          "libharfbuzz",
-          "libfribidi",
-          "libass",
-          "vulkan",
-          "libshaderc",
-          "lcms2",
-          "libplacebo",
-          "libdav1d",
-        )
-
-        for (dep in dependencyLibrary) add("--enable-$dep")
-
-        add("--enable-decoder=dav1d")
-        add("--enable-filter=ass")
-        add("--enable-filter=subtitles")
-        add("--enable-filter=libplacebo")
-
+      if (buildTarget.get().arch == Architecture.x86_64) {
+        add("--disable-neon", "--disable-asm")
+      } else {
+        add("--enable-neon", "--enable-asm")
       }
-      doFirst {
-        val context = buildContext(dependency, buildTarget.get())
-        val videotoolbox = context.sourceDir.resolve("libavcodec/videotoolbox.c")
-        videotoolbox.readLines()
-          .toMutableList()
-          .apply {
-            this[791 - 1] = this[791 - 1].replace("kCVPixelBufferOpenGLESCompatibilityKey", "kCVPixelBufferMetalCompatibilityKey")
-            this[793 - 1] = this[793 - 1].replace("kCVPixelBufferIOSurfaceOpenGLTextureCompatibilityKey", "kCVPixelBufferMetalCompatibilityKey")
-          }
-          .joinToString("\n")
-          .apply(videotoolbox::writeText)
-      }
+      add("--disable-programs")
 
-    },
-    postBuild = { buildTarget ->
-      doLast {
-        val context = buildContext(dependency, buildTarget)
-        val includeDir = context.prefixDir.resolve("include")
-        context.buildDir.resolve("config.h").apply {
-          copyTo(target = includeDir.resolve("libavutil/config.h"), overwrite = true)
-          copyTo(target = includeDir.resolve("libavcodec/config.h"), overwrite = true)
-          copyTo(target = includeDir.resolve("libavformat/config.h"), overwrite = true)
+
+      val dependencyLibrary = listOf(
+        "mbedtls",
+        "libfreetype",
+        "libharfbuzz",
+        "libfribidi",
+        "libass",
+        "vulkan",
+        "libshaderc",
+        "lcms2",
+        "libplacebo",
+        "libdav1d",
+      )
+
+      for (dep in dependencyLibrary) add("--enable-$dep")
+
+      add("--enable-decoder=dav1d")
+      add("--enable-filter=ass")
+      add("--enable-filter=subtitles")
+      add("--enable-filter=libplacebo")
+
+    }
+    doFirst {
+      val context = buildContext(dep, buildTarget.get())
+      val videotoolbox = context.sourceDir.resolve("libavcodec/videotoolbox.c")
+      videotoolbox.readLines()
+        .toMutableList()
+        .apply {
+          this[791 - 1] = this[791 - 1].replace("kCVPixelBufferOpenGLESCompatibilityKey", "kCVPixelBufferMetalCompatibilityKey")
+          this[793 - 1] = this[793 - 1].replace("kCVPixelBufferIOSurfaceOpenGLTextureCompatibilityKey", "kCVPixelBufferMetalCompatibilityKey")
         }
-        val avutilHeaders = listOf("getenv_utf8.h", "libm.h", "thread.h", "intmath.h", "mem_internal.h", "attributes_internal.h")
-        for (header in avutilHeaders) {
-          val file = context.buildDir.resolve("src/libavutil/$header")
-          val destination = includeDir.resolve("libavutil/$header")
-          file.copyTo(destination)
-        }
-        context.buildDir.resolve("src/libavcodec/mathops.h").copyTo(target = includeDir.resolve("libavcodec/mathops.h"), overwrite = true)
-        context.buildDir.resolve("src/libavformat/os_support.h").copyTo(target = includeDir.resolve("libavformat/os_support.h") )
-        context.buildDir.resolve("src/libavutil/internal.h").copyTo(target = includeDir.resolve("libavutil/internal.h"), overwrite = true)
+        .joinToString("\n")
+        .apply(videotoolbox::writeText)
+    }
 
-        includeDir.resolve("libavutil/internal.h")
-          .apply {
-            val text = this.readText()
-              .replace("#include \"timer.h\"", "//#include \"timer.h\"")
-              .replace("kCVPixelBufferIOSurfaceOpenGLTextureCompatibilityKey", "kCVPixelBufferMetalCompatibilityKey")
-            writeText(text)
-          }
+  },
+  postBuild = { buildTarget ->
+    doLast {
+      val context = buildContext(dep, buildTarget)
+      val includeDir = context.prefixDir.resolve("include")
+      context.buildDir.resolve("config.h").apply {
+        copyTo(target = includeDir.resolve("libavutil/config.h"), overwrite = true)
+        copyTo(target = includeDir.resolve("libavcodec/config.h"), overwrite = true)
+        copyTo(target = includeDir.resolve("libavformat/config.h"), overwrite = true)
       }
+      val avutilHeaders = listOf("getenv_utf8.h", "libm.h", "thread.h", "intmath.h", "mem_internal.h", "attributes_internal.h")
+      for (header in avutilHeaders) {
+        val file = context.buildDir.resolve("src/libavutil/$header")
+        val destination = includeDir.resolve("libavutil/$header")
+        file.copyTo(destination)
+      }
+      context.buildDir.resolve("src/libavcodec/mathops.h").copyTo(target = includeDir.resolve("libavcodec/mathops.h"), overwrite = true)
+      context.buildDir.resolve("src/libavformat/os_support.h").copyTo(target = includeDir.resolve("libavformat/os_support.h") )
+      context.buildDir.resolve("src/libavutil/internal.h").copyTo(target = includeDir.resolve("libavutil/internal.h"), overwrite = true)
 
-    },
+      includeDir.resolve("libavutil/internal.h")
+        .apply {
+          val text = this.readText()
+            .replace("#include \"timer.h\"", "//#include \"timer.h\"")
+            .replace("kCVPixelBufferIOSurfaceOpenGLTextureCompatibilityKey", "kCVPixelBufferMetalCompatibilityKey")
+          writeText(text)
+        }
+    }
 
-  )
-
-
-}
+  },
+)
 
 private val ffmpegConfigurers: List<String>
   get() = listOf(

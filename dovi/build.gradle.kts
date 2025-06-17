@@ -15,38 +15,34 @@ version = libs.versions.library
 repositories { mavenCentral() }
 kotlin { jvmToolchain(23) }
 
-afterEvaluate {
+val dep = Dependency.dovi
 
-  val dependency = Dependency.dovi
-
-  registerBasicWorkflow(
-    targets = DEFAULT_TARGETS,
-    dependency = dependency,
-    build = {
-      skip = true
-      arguments = arrayOf()
-      val context = buildContext(dependency, buildTarget.get())
-      doLast {
-        execExpectingSuccess {
-          val target = context.buildTarget.rustTarget.let {
-            when (it) {
-              "x86_64-apple-ios-sim" -> "x86_64-apple-ios"
-              else -> it
-            }
+registerBasicWorkflow(
+  targets = DEFAULT_TARGETS,
+  dependency = dep,
+  build = {
+    skip = true
+    arguments = arrayOf()
+    val context = buildContext(dep, buildTarget.get())
+    doLast {
+      execExpectingSuccess {
+        val target = context.buildTarget.rustTarget.let {
+          when (it) {
+            "x86_64-apple-ios-sim" -> "x86_64-apple-ios"
+            else -> it
           }
-          workingDir = context.sourceDir.resolve("dolby_vision")
-          command = arrayOf(
-            "cargo", "+nightly", "cinstall",
-            "-Zbuild-std=std,panic_abort",
-            "--release",
-            "--prefix=${context.prefixDir.absolutePath}",
-            "--target=$target"
-          )
         }
+        workingDir = context.sourceDir.resolve("dolby_vision")
+        command = arrayOf(
+          "cargo", "+nightly", "cinstall",
+          "-Zbuild-std=std,panic_abort",
+          "--release",
+          "--prefix=${context.prefixDir.absolutePath}",
+          "--target=$target"
+        )
       }
-    },
-  )
-
-}
+    }
+  },
+)
 
 

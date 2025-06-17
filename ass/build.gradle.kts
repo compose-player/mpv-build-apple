@@ -11,24 +11,20 @@ version = libs.versions.library
 repositories { mavenCentral() }
 kotlin { jvmToolchain(23) }
 
-afterEvaluate {
-
-  registerBasicWorkflow(
-    dependency = Dependency.ass,
-    targets = DEFAULT_TARGETS,
-    build = {
-      this.arguments = arrayOf(
-        "-Dlibunibreak=enabled",
-        "-Dcoretext=enabled",
-        "-Dfontconfig=disabled",
-        "-Ddirectwrite=disabled",
-        "-Dasm=disabled",
-        "-Dtest=disabled",
-        "-Dprofile=disabled",
-      )
-    }
-  )
-
-}
+registerBasicWorkflow(
+  dependency = Dependency.ass,
+  targets = DEFAULT_TARGETS,
+  build = {
+    this.arguments = arrayOf(
+      "-Dlibunibreak=enabled",
+      "-Dcoretext=enabled",
+      "-Dfontconfig=disabled",
+      "-Ddirectwrite=disabled",
+      "-Dasm=disabled",
+      "-Dtest=disabled",
+      "-Dprofile=disabled",
+    )
+  }
+)
 
 

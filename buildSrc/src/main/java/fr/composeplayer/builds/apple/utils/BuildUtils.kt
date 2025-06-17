@@ -78,7 +78,12 @@ private class ProcessBuilderScope(
 
   override val env: CommandScope.Environment = object : CommandScope.Environment {
     override fun get(key: String): String? = builder.environment()[key]
-    override fun set(key: String, value: String?) = builder.environment().set(key, value)
+    override fun set(key: String, value: String?) {
+      when {
+        value == null -> builder.environment().remove(key)
+        else -> builder.environment().set(key, value)
+      }
+    }
   }
 }
 
@@ -284,7 +289,7 @@ fun Project.registerBasicWorkflow(
       /* type = */ CreateFramework::class.java,
       /* configurationAction = */ {
         this.group = group
-        this.dependency = Dependency.ffmpeg
+        this.dependency = dependency
         this.platform = platform
         this.architectures = architectures
         this.type = CreateFramework.FrameworkType.static
@@ -296,7 +301,7 @@ fun Project.registerBasicWorkflow(
       /* type = */ CreateFramework::class.java,
       /* configurationAction = */ {
         this.group = group
-        this.dependency = Dependency.ffmpeg
+        this.dependency = dependency
         this.platform = platform
         this.architectures = architectures
         this.type = CreateFramework.FrameworkType.shared
@@ -312,7 +317,7 @@ fun Project.registerBasicWorkflow(
     /* type = */ CreateXcFramework::class.java,
     /* configurationAction = */ {
       this.group = group
-      this.dependency = Dependency.ffmpeg
+      this.dependency = dependency
       this.type = CreateXcFramework.FrameworkType.static
       createXcframework.invoke(this)
     }

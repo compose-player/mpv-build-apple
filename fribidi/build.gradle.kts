@@ -12,17 +12,13 @@ version = libs.versions.library
 repositories { mavenCentral() }
 kotlin { jvmToolchain(23) }
 
-afterEvaluate {
-
-  registerBasicWorkflow(
-    targets = DEFAULT_TARGETS,
-    dependency = Dependency.fribidi,
-    build = {
-      this.arguments = arrayOf(
-        "-Dtests=false",
-        "-Ddocs=false",
-      )
-    },
-  )
-
-}
+registerBasicWorkflow(
+  targets = DEFAULT_TARGETS,
+  dependency = Dependency.fribidi,
+  build = {
+    this.arguments = arrayOf(
+      "-Dtests=false",
+      "-Ddocs=false",
+    )
+  },
+)

@@ -12,14 +12,10 @@ version = libs.versions.library
 repositories { mavenCentral() }
 kotlin { jvmToolchain(23) }
 
-afterEvaluate {
-
-  registerBasicWorkflow(
-    targets = DEFAULT_TARGETS,
-    dependency = Dependency.uchardet,
-    build = {
-      this.arguments = arrayOf("-DBUILD_BINARY=0")
-    },
-  )
-
-}
+registerBasicWorkflow(
+  targets = DEFAULT_TARGETS,
+  dependency = Dependency.uchardet,
+  build = {
+    this.arguments = arrayOf("-DBUILD_BINARY=0")
+  },
+)

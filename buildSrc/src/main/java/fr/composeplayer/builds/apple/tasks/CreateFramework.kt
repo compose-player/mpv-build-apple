@@ -16,6 +16,7 @@ import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.TaskAction
 import java.io.File
 
+
 open class CreateFramework : DefaultTask() {
 
   enum class FrameworkType { static, shared }
@@ -27,7 +28,8 @@ open class CreateFramework : DefaultTask() {
 
   @TaskAction
   fun execute() {
-    for (framework in dependency.frameworks) {
+    return
+    /*for (framework in dependency.frameworks) {
       logger.lifecycle("Creating framework [$framework] from component [$dependency]")
       val installDir = project.rootDir.resolve("fat-frameworks/$type/$platform/$framework.framework")
       if (installDir.exists) {
@@ -74,7 +76,7 @@ open class CreateFramework : DefaultTask() {
         }
       val plist = plist(framework, platform)
       installDir.resolve("Info.plist").writeText(plist)
-    }
+    }*/
   }
 
 }

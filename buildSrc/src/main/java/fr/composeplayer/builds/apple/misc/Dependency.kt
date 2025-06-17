@@ -1,5 +1,8 @@
 package fr.composeplayer.builds.apple.misc
 
+import fr.composeplayer.builds.apple.tasks.CreateFramework
+import fr.composeplayer.builds.apple.utils.add
+
 @Suppress("EnumEntryName")
 enum class Dependency {
   ffmpeg,
@@ -19,26 +22,6 @@ enum class Dependency {
   lcms,
   spirvcross,
 }
-
-val Dependency.frameworkName: String
-  get() = when (this) {
-    Dependency.ffmpeg -> error("")
-    Dependency.ass -> "Ass"
-    Dependency.dav1d -> "Dav1d"
-    Dependency.placebo -> "Placebo"
-    Dependency.freetype -> "Freetype"
-    Dependency.harfbuzz -> "Harfbuzz"
-    Dependency.fribidi -> "Fribidi"
-    Dependency.mbedtls -> "Mbedtls"
-    Dependency.shaderc -> "Shaderc"
-    Dependency.moltenvk -> "MoltenVK"
-    Dependency.uchardet -> "Uchardet"
-    Dependency.mpv -> "Mpv"
-    Dependency.unibreak -> "Unibreak"
-    Dependency.dovi -> "Dovi"
-    Dependency.lcms -> "Lcms"
-    Dependency.spirvcross -> "SpirvCross"
-  }
 
 val Dependency.flagsDependencelibrarys: List<String>
   get() = buildList {
@@ -122,21 +105,187 @@ val Dependency.versionName: String
     Dependency.spirvcross -> "vulkan-sdk-1.3.268.0"
   }
 
-val Dependency.frameworks: List<String>
-  get() = when (this) {
-    Dependency.ffmpeg -> listOf("Avcodec", "Avdevice", "Avfilter", "Avformat", "Avutil", "Swresample", "Swscale")
-    Dependency.shaderc -> listOf("libshaderc_combined")
-    Dependency.spirvcross -> emptyList()
-    else -> listOf(this.frameworkName)
+data class FrameworkCreationData(
+  val frameworkName: String,
+  val headers: List<String>,
+  val binaryName: String,
+  val excludeHeaders: List<String>,
+)
+
+val Dependency.frameworks: List<FrameworkCreationData>
+  get() = buildList {
+    when (this@frameworks) {
+      Dependency.ffmpeg -> add(
+        FrameworkCreationData(
+          frameworkName = "Avcodec",
+          binaryName = "libavcodec",
+          headers = listOf("libavcodec"),
+          excludeHeaders = listOf("xvmc", "vdpau", "qsv", "dxva2", "d3d11va", "d3d12va"),
+        ),
+        FrameworkCreationData(
+          frameworkName = "Avdevice",
+          binaryName = "libavdevice",
+          headers = listOf("libavdevice"),
+          excludeHeaders = listOf(),
+        ),
+        FrameworkCreationData(
+          frameworkName = "Avfilter",
+          binaryName = "libavfilter",
+          headers = listOf("libavfilter"),
+          excludeHeaders = listOf(),
+        ),
+        FrameworkCreationData(
+          frameworkName = "Avformat",
+          binaryName = "libavformat",
+          headers = listOf("libavformat"),
+          excludeHeaders = listOf(),
+        ),
+        FrameworkCreationData(
+          frameworkName = "Avutil",
+          binaryName = "libavutil",
+          headers = listOf("libavutil"),
+          excludeHeaders = listOf(
+            "hwcontext_vulkan",
+            "hwcontext_vdpau",
+            "hwcontext_vaapi",
+            "hwcontext_qsv",
+            "hwcontext_opencl",
+            "hwcontext_dxva2",
+            "hwcontext_d3d11va",
+            "hwcontext_d3d12va",
+            "hwcontext_cuda"
+          ),
+        ),
+        FrameworkCreationData(
+          frameworkName = "Swresample",
+          binaryName = "libswresample",
+          headers = listOf("libswresample"),
+          excludeHeaders = listOf(),
+        ),
+        FrameworkCreationData(
+          frameworkName = "Swscale",
+          binaryName = "libswscale",
+          headers = listOf("libswscale"),
+          excludeHeaders = listOf(),
+        ),
+      )
+      Dependency.shaderc -> add(
+        FrameworkCreationData(
+          headers = listOf("glslang", "shaderc", "spirv-tools"),
+          binaryName = "libshaderc_combined",
+          frameworkName = "Shaderc_combined",
+          excludeHeaders = emptyList(),
+        )
+      )
+      Dependency.spirvcross -> return@buildList
+      Dependency.ass -> add(
+        FrameworkCreationData(
+          headers = listOf("ass"),
+          binaryName = "libass",
+          frameworkName = "Ass",
+          excludeHeaders = emptyList(),
+        )
+      )
+      Dependency.dav1d -> add(
+        FrameworkCreationData(
+          headers = listOf("dav1d"),
+          binaryName = "libdav1d",
+          frameworkName = "Dav1d",
+          excludeHeaders = emptyList(),
+        ),
+      )
+      Dependency.placebo -> add(
+        FrameworkCreationData(
+          headers = listOf("libplacebo"),
+          binaryName = "libplacebo",
+          frameworkName = "Placebo",
+          excludeHeaders = emptyList(),
+        ),
+      )
+      Dependency.freetype -> add(
+        FrameworkCreationData(
+          headers = listOf("freetype2"),
+          binaryName = "libfreetype",
+          frameworkName = "Freetype",
+          excludeHeaders = emptyList(),
+        )
+      )
+      Dependency.harfbuzz -> add(
+        FrameworkCreationData(
+          headers = listOf("harfbuzz"),
+          binaryName = "libharfbuzz",
+          frameworkName = "Harfbuzz",
+          excludeHeaders = emptyList(),
+        )
+      )
+      Dependency.fribidi -> add(
+        FrameworkCreationData(
+          headers = listOf("fribidi"),
+          binaryName = "libfribidi",
+          frameworkName = "Fribidi",
+          excludeHeaders = emptyList(),
+        )
+      )
+      Dependency.mbedtls -> add(
+        FrameworkCreationData(
+          headers = listOf("mbedtls"),
+          binaryName = "libmbedtls",
+          frameworkName = "Mbedtls",
+          excludeHeaders = emptyList(),
+        )
+      )
+      Dependency.moltenvk -> return@buildList
+      Dependency.uchardet -> add(
+        FrameworkCreationData(
+          headers = listOf("uchardet"),
+          binaryName = "libuchardet",
+          frameworkName = "Uchardet",
+          excludeHeaders = emptyList(),
+        )
+      )
+      Dependency.mpv -> add(
+        FrameworkCreationData(
+          headers = listOf("mpv"),
+          binaryName = "libmpv",
+          frameworkName = "Mpv",
+          excludeHeaders = emptyList(),
+        )
+      )
+      Dependency.unibreak -> add(
+        FrameworkCreationData(
+          headers = listOf("eastasianwidthdef.h", "graphmebreak.h", "linebreak.h", "linebreakdef.h", "unibreakbase.h", "unibreakdef.h", "wordbreak.h"),
+          binaryName = "libunibreak",
+          frameworkName = "Unibreak",
+          excludeHeaders = emptyList(),
+        )
+      )
+      Dependency.dovi -> add(
+        FrameworkCreationData(
+          headers = listOf("libdovi"),
+          binaryName = "libdovi",
+          frameworkName = "Dovi",
+          excludeHeaders = emptyList(),
+        )
+      )
+      Dependency.lcms -> add(
+        FrameworkCreationData(
+          headers = listOf("lcms2_plugin.h", "lcms2.h"),
+          binaryName = "liblcms2",
+          frameworkName = "Lcms2",
+          excludeHeaders = emptyList(),
+        )
+      )
+    }
   }
 
 fun Dependency.frameworkExcludeHeaders(framework: String): List<String> {
   return when (this) {
     Dependency.ffmpeg -> when (framework) {
       "Avcodec" -> listOf("xvmc", "vdpau", "qsv", "dxva2", "d3d11va", "d3d12va")
-      "Avutil" -> listOf("hwcontext_vulkan", "hwcontext_vdpau", "hwcontext_vaapi", "hwcontext_qsv", "hwcontext_opencl", "hwcontext_dxva2", "hwcontext_d3d11va", "hwcontext_d3d12va", "hwcontext_cuda")
+      "Avutil" -> listOf()
       else -> emptyList()
     }
+
     else -> emptyList()
   }
 }

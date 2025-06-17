@@ -12,26 +12,22 @@ version = libs.versions.library
 repositories { mavenCentral() }
 kotlin { jvmToolchain(23) }
 
-afterEvaluate {
-
-  registerBasicWorkflow(
-    targets = DEFAULT_TARGETS,
-    dependency = Dependency.placebo,
-    build = {
-      this.arguments = arrayOf(
-        "-Dopengl=enabled",
-        "-Dvulkan=enabled",
-        "-Dshaderc=enabled",
-        "-Dlcms=enabled",
-        "-Dxxhash=disabled",
-        "-Dunwind=disabled",
-        "-Dglslang=disabled",
-        "-Dd3d11=disabled",
-        "-Ddemos=false",
-        "-Dtests=false",
-        "-Ddovi=enabled", "-Dlibdovi=enabled"
-      )
-    },
-  )
-
-}
+registerBasicWorkflow(
+  targets = DEFAULT_TARGETS,
+  dependency = Dependency.placebo,
+  build = {
+    this.arguments = arrayOf(
+      "-Dopengl=enabled",
+      "-Dvulkan=enabled",
+      "-Dshaderc=enabled",
+      "-Dlcms=enabled",
+      "-Dxxhash=disabled",
+      "-Dunwind=disabled",
+      "-Dglslang=disabled",
+      "-Dd3d11=disabled",
+      "-Ddemos=false",
+      "-Dtests=false",
+      "-Ddovi=enabled", "-Dlibdovi=enabled"
+    )
+  },
+)

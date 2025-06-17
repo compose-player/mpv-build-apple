@@ -29,7 +29,7 @@ abstract class AutoBuildTask : DefaultTask() {
   @get:Input abstract val dependency: Property<Dependency>
   @get:Input abstract val arguments: Property<Array<String>>
 
-  private val environement: Map<String, String> by lazy {
+  private val environement: Map<String, String?> by lazy {
     val context = buildContext(dependency.get(), buildTarget.get())
     val cFlags = context.cFlags.joinToString(separator = " ")
     val ldFlags = context.ldFlags.joinToString(separator = " ")
@@ -44,7 +44,8 @@ abstract class AutoBuildTask : DefaultTask() {
       "CPPFLAGS" to cFlags,
       "CXXFLAGS" to cFlags,
       "LDFLAGS" to ldFlags,
-      "PKG_CONFIG_LIBDIR" to "${pkgConfigPath}:${pkgConfigPathDefault}",
+      "PKG_CONFIG_LIBDIR" to "${pkgConfigPath.absolutePath}:${pkgConfigPathDefault}",
+      "PKG_CONFIG_PATH" to pkgConfigPath.absolutePath,
     )
   }
 

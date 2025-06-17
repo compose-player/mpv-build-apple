@@ -18,4 +18,27 @@ afterEvaluate {
     }
   }
 
+
+  for (project in subprojects) {
+
+    project.afterEvaluate {
+      val clone by project.tasks.named("clone")
+      val buildAll by project.tasks.named("build[all]")
+      val frameworks by project.tasks.named("createFramework[all][both]")
+      val xcframeworks by project.tasks.named("createXcframework[both]")
+
+      tasks.register(
+        name = "assemble[${project.name}]",
+        type = Task::class,
+        configurationAction = {
+          group = "mpv-build"
+          buildAll.mustRunAfter(clone)
+          frameworks.mustRunAfter(buildAll)
+          xcframeworks.mustRunAfter(frameworks)
+          dependsOn(clone, buildAll, frameworks, xcframeworks)
+        }
+      )
+    }
+  }
+
 }

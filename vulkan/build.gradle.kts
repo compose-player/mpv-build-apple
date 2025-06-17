@@ -1,6 +1,3 @@
-@file:OptIn(ExperimentalStdlibApi::class)
-@file:Suppress("EnumEntryName")
-
 import fr.composeplayer.builds.apple.misc.BuildTarget
 import fr.composeplayer.builds.apple.misc.Dependency
 import fr.composeplayer.builds.apple.misc.Platform
@@ -18,74 +15,78 @@ version = libs.versions.library
 repositories { mavenCentral() }
 kotlin { jvmToolchain(23) }
 
-afterEvaluate {
+val targets = DEFAULT_TARGETS.flatMap { (platform, archs) -> archs.map { BuildTarget(platform, it) } }
 
-  val targets = DEFAULT_TARGETS.flatMap { (platform, archs) -> archs.map { BuildTarget(platform, it) } }
-
-  registerBasicWorkflow(
-    targets = DEFAULT_TARGETS,
-    dependency = Dependency.moltenvk,
-    prebuild = {
-      enabled = !rootProject.rootDir.resolve("vendor/${Dependency.moltenvk}/External").exists()
-      doLast {
-        val sourceDir = File(rootProject.rootDir, "vendor/${Dependency.moltenvk}")
-        val deps = targets.map { "--${it.platform.buildTag}" }.toTypedArray()
-        execExpectingSuccess {
-          workingDir = sourceDir
-          command = arrayOf(
-            sourceDir.resolve("fetchDependencies").absolutePath,
-            *deps
-          )
-        }
+registerBasicWorkflow(
+  targets = DEFAULT_TARGETS,
+  dependency = Dependency.moltenvk,
+  prebuild = {
+    enabled = !rootProject.rootDir.resolve("vendor/${Dependency.moltenvk}/External").exists()
+    doLast {
+      val sourceDir = File(rootProject.rootDir, "vendor/${Dependency.moltenvk}")
+      val deps = targets.map { "--${it.platform.buildTag}" }.toTypedArray()
+      execExpectingSuccess {
+        workingDir = sourceDir
+        command = arrayOf(
+          sourceDir.resolve("fetchDependencies").absolutePath,
+          *deps
+        )
       }
-    },
-    build = {
-      arguments = emptyArray()
-      skip = true
-      doLast {
+    }
+  },
+  build = {
+    arguments = emptyArray()
+    skip = true
+    doLast {
+      val sourceDir = File(rootProject.rootDir, "vendor/${Dependency.moltenvk}")
+      execExpectingSuccess {
+        workingDir = sourceDir
+        command = arrayOf("make", "clean")
+      }
+      execExpectingSuccess {
+        val args = targets.map { it.platform.buildTag }.toTypedArray()
+        workingDir = sourceDir
+        command = arrayOf("make", *args)
+      }
+    }
+  },
+  postBuild = {
+    doLast {
+      val rawVersion = execExpectingResult {
         val sourceDir = File(rootProject.rootDir, "vendor/${Dependency.moltenvk}")
-        val vulkanVersion = execExpectingResult {
-          val sourceDir = File(rootProject.rootDir, "vendor/${Dependency.moltenvk}")
-          workingDir = sourceDir.resolve("External/Vulkan-Headers")
-          command = arrayOf("git", "describe", "--tags", "HEAD")
-        }
-        execExpectingSuccess {
-          workingDir = sourceDir
-          command = arrayOf("make", "clean")
-        }
-        execExpectingSuccess {
-          val args = targets.map { it.platform.buildTag }.toTypedArray()
-          workingDir = sourceDir
-          command = arrayOf("make", *args)
-        }
-        for (target in targets) {
-          val context = buildContext(Dependency.moltenvk, target)
-          val subs = listOf("static", "dynamic")
-          for (sub in subs) {
-            val binDir = when (target.platform) {
-              Platform.ios -> "ios-arm64"
-              Platform.isimulator -> "ios-arm64_x86_64-simulator"
-              Platform.macos -> "macos-arm64_x86_64"
-            }
-            val sourceFile = when (sub) {
-              "static" -> sourceDir.resolve("Package/Release/MoltenVK/$sub/MoltenVK.xcframework/$binDir/libMoltenVK.a")
-              "dynamic" -> sourceDir.resolve("Package/Release/MoltenVK/$sub/MoltenVK.xcframework/$binDir/MoltenVK.framework/MoltenVK")
-              else -> throw GradleException("Unknown bin name: $sub")
-            }
-            val destination = context.prefixDir.resolve("lib/${sourceFile.name}")
-            if (destination.exists()) continue
-            sourceFile.copyTo(destination)
+        workingDir = sourceDir.resolve("External/Vulkan-Headers")
+        command = arrayOf("git", "describe", "--tags", "HEAD")
+      }
+      val vulkanVersion = rawVersion.split("-").first()
+      val sourceDir = File(rootProject.rootDir, "vendor/${Dependency.moltenvk}")
+      for (target in targets) {
+        val context = buildContext(Dependency.moltenvk, target)
+        val subs = listOf("static", "dynamic")
+        for (sub in subs) {
+          val binDir = when (target.platform) {
+            Platform.ios -> "ios-arm64"
+            Platform.isimulator -> "ios-arm64_x86_64-simulator"
+            Platform.macos -> "macos-arm64_x86_64"
           }
-          val frameworks = let {
-            val list = buildList {
-              add("CoreFoundation", "CoreGraphics", "Foundation", "IOSurface", "Metal", "QuartzCore")
-              if (target.platform != Platform.macos) add("UIKit")
-              if (target.platform == Platform.macos) add("Cocoa")
-              add("IOKit")
-            }
-            list.joinToString(separator = " ", transform = { "-framework $it"})
+          val sourceFile = when (sub) {
+            "static" -> sourceDir.resolve("Package/Release/MoltenVK/$sub/MoltenVK.xcframework/$binDir/libMoltenVK.a")
+            "dynamic" -> sourceDir.resolve("Package/Release/MoltenVK/$sub/MoltenVK.xcframework/$binDir/MoltenVK.framework/MoltenVK")
+            else -> throw GradleException("Unknown bin name: $sub")
           }
-          val pcContent = """
+          val destination = context.prefixDir.resolve("lib/${sourceFile.name}")
+          if (destination.exists()) continue
+          sourceFile.copyTo(destination)
+        }
+        val frameworks = let {
+          val list = buildList {
+            add("CoreFoundation", "CoreGraphics", "Foundation", "IOSurface", "Metal", "QuartzCore")
+            if (target.platform != Platform.macos) add("UIKit")
+            if (target.platform == Platform.macos) add("Cocoa")
+            add("IOKit")
+          }
+          list.joinToString(separator = " ", transform = { "-framework $it"})
+        }
+        val pcContent = """
           prefix=${context.prefixDir.absolutePath}
           includedir=${'$'}{prefix}/include
           libdir=${'$'}{prefix}/lib
@@ -96,22 +97,20 @@ afterEvaluate {
           Libs: -L${'$'}{libdir} -lMoltenVK $frameworks
           Cflags: -I${'$'}{includedir}
         """
-          val pcFile = context.prefixDir.resolve("lib/pkgconfig/vulkan.pc")
-          pcFile.writeText( pcContent.trimIndent() )
+        val pcFile = context.prefixDir.resolve("lib/pkgconfig/vulkan.pc")
+        pcFile.writeText( pcContent.trimIndent() )
 
-          val vulkanIncludes = sourceDir.resolve("Package/Release/MoltenVK/include")
-            .listFiles()!!
-            .filter(File::isDirectory)
-          for (dir in vulkanIncludes) {
-            val destination = context.prefixDir.resolve("include/${dir.name}")
-            if (destination.exists()) continue
-            dir.copyRecursively(destination)
-          }
+        val vulkanIncludes = sourceDir.resolve("Package/Release/MoltenVK/include")
+          .listFiles()!!
+          .filter(File::isDirectory)
+        for (dir in vulkanIncludes) {
+          val destination = context.prefixDir.resolve("include/${dir.name}")
+          if (destination.exists()) continue
+          dir.copyRecursively(destination)
         }
       }
-    },
-  )
-
-}
+    }
+  }
+)
 
 
