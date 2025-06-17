@@ -1,12 +1,9 @@
-import fr.composeplayer.builds.apple.misc.Architecture
 import fr.composeplayer.builds.apple.misc.Dependency
-import fr.composeplayer.builds.apple.misc.Platform
-import fr.composeplayer.builds.apple.misc.name
 import fr.composeplayer.builds.apple.misc.rustTarget
-import fr.composeplayer.builds.apple.tasks.CloneTask
-import fr.composeplayer.builds.apple.tasks.applyFrom
 import fr.composeplayer.builds.apple.tasks.buildContext
+import fr.composeplayer.builds.apple.utils.DEFAULT_TARGETS
 import fr.composeplayer.builds.apple.utils.execExpectingSuccess
+import fr.composeplayer.builds.apple.utils.registerBasicWorkflow
 
 plugins {
   kotlin("jvm")
@@ -20,35 +17,18 @@ kotlin { jvmToolchain(23) }
 
 afterEvaluate {
 
-  val platforms = listOf(
-    Platform.MacOS(Architecture.arm64),
-    Platform.MacOS(Architecture.x86_64),
-    Platform.IOS(Architecture.arm64),
-  )
+  val dependency = Dependency.dovi
 
-  tasks.getByName("clean") {
-    doLast {
-      val file = File(rootProject.rootDir, "vendor/${Dependency.dovi}")
-      if (file.exists()) file.deleteRecursively()
-    }
-  }
-
-  tasks.register<CloneTask>("clone") {
-    applyFrom(Dependency.dovi)
-  }
-
-  val buildAll by tasks.register<Task>("buildAll")
-
-  for (platform in platforms) {
-
-    tasks.register<DefaultTask>(
-      name = "build[${platform.name}][${platform.arch.name}]",
-    ) {
-      buildAll.dependsOn(this)
-      val context = buildContext(Dependency.dovi, platform)
+  registerBasicWorkflow(
+    targets = DEFAULT_TARGETS,
+    dependency = dependency,
+    build = {
+      skip = true
+      arguments = arrayOf()
+      val context = buildContext(dependency, buildTarget.get())
       doLast {
         execExpectingSuccess {
-          val target = platform.rustTarget.let {
+          val target = context.buildTarget.rustTarget.let {
             when (it) {
               "x86_64-apple-ios-sim" -> "x86_64-apple-ios"
               else -> it
@@ -64,11 +44,8 @@ afterEvaluate {
           )
         }
       }
-
-    }
-  }
-
-
+    },
+  )
 
 }
 

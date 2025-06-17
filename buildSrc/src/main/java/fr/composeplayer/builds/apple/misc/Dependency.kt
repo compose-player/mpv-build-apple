@@ -20,24 +20,46 @@ enum class Dependency {
   spirvcross,
 }
 
-val Dependency.requirements: List<Dependency>
+val Dependency.frameworkName: String
   get() = when (this) {
-    Dependency.ffmpeg -> listOf(Dependency.mbedtls, Dependency.dav1d)
-    Dependency.ass -> listOf(Dependency.fribidi, Dependency.unibreak, Dependency.harfbuzz, Dependency.uchardet)
-    Dependency.dav1d -> listOf()
-    Dependency.placebo -> listOf(Dependency.dovi, Dependency.lcms, Dependency.shaderc, Dependency.moltenvk, Dependency.spirvcross)
-    Dependency.freetype -> listOf(Dependency.harfbuzz)
-    Dependency.harfbuzz -> listOf()
-    Dependency.fribidi -> listOf()
-    Dependency.mbedtls -> listOf()
-    Dependency.uchardet -> listOf()
-    Dependency.unibreak -> listOf()
-    Dependency.dovi -> listOf()
-    Dependency.lcms -> listOf()
-    Dependency.mpv -> listOf(Dependency.ffmpeg, Dependency.ass)
-    Dependency.spirvcross -> listOf(Dependency.moltenvk)
-    Dependency.shaderc -> listOf(Dependency.moltenvk)
-    Dependency.moltenvk -> listOf()
+    Dependency.ffmpeg -> error("")
+    Dependency.ass -> "Ass"
+    Dependency.dav1d -> "Dav1d"
+    Dependency.placebo -> "Placebo"
+    Dependency.freetype -> "Freetype"
+    Dependency.harfbuzz -> "Harfbuzz"
+    Dependency.fribidi -> "Fribidi"
+    Dependency.mbedtls -> "Mbedtls"
+    Dependency.shaderc -> "Shaderc"
+    Dependency.moltenvk -> "MoltenVK"
+    Dependency.uchardet -> "Uchardet"
+    Dependency.mpv -> "Mpv"
+    Dependency.unibreak -> "Unibreak"
+    Dependency.dovi -> "Dovi"
+    Dependency.lcms -> "Lcms"
+    Dependency.spirvcross -> "SpirvCross"
+  }
+
+val Dependency.flagsDependencelibrarys: List<String>
+  get() = buildList {
+    when (this@flagsDependencelibrarys) {
+      Dependency.ffmpeg -> add("mbedtls")
+      Dependency.ass -> Unit
+      Dependency.dav1d -> Unit
+      Dependency.placebo -> add("libdovi")
+      Dependency.freetype -> Unit
+      Dependency.harfbuzz -> Unit
+      Dependency.fribidi -> Unit
+      Dependency.mbedtls -> Unit
+      Dependency.shaderc -> Unit
+      Dependency.moltenvk -> Unit
+      Dependency.uchardet -> Unit
+      Dependency.mpv -> Unit
+      Dependency.unibreak -> Unit
+      Dependency.dovi -> Unit
+      Dependency.lcms -> Unit
+      Dependency.spirvcross -> Unit
+    }
   }
 
 val Dependency.cloneArgs: Array<String>
@@ -90,7 +112,7 @@ val Dependency.versionName: String
     Dependency.harfbuzz -> "11.2.1"
     Dependency.fribidi -> "v1.0.16"
     Dependency.mbedtls -> "v3.6.1"
-    Dependency.shaderc -> "v2025.2"
+    Dependency.shaderc -> "v2024.3"
     Dependency.moltenvk -> "v1.3.0"
     Dependency.uchardet -> "v0.0.8"
     Dependency.mpv -> "v0.40.0"
@@ -99,3 +121,22 @@ val Dependency.versionName: String
     Dependency.lcms -> "lcms2.16"
     Dependency.spirvcross -> "vulkan-sdk-1.3.268.0"
   }
+
+val Dependency.frameworks: List<String>
+  get() = when (this) {
+    Dependency.ffmpeg -> listOf("Avcodec", "Avdevice", "Avfilter", "Avformat", "Avutil", "Swresample", "Swscale")
+    Dependency.shaderc -> listOf("libshaderc_combined")
+    Dependency.spirvcross -> emptyList()
+    else -> listOf(this.frameworkName)
+  }
+
+fun Dependency.frameworkExcludeHeaders(framework: String): List<String> {
+  return when (this) {
+    Dependency.ffmpeg -> when (framework) {
+      "Avcodec" -> listOf("xvmc", "vdpau", "qsv", "dxva2", "d3d11va", "d3d12va")
+      "Avutil" -> listOf("hwcontext_vulkan", "hwcontext_vdpau", "hwcontext_vaapi", "hwcontext_qsv", "hwcontext_opencl", "hwcontext_dxva2", "hwcontext_d3d11va", "hwcontext_d3d12va", "hwcontext_cuda")
+      else -> emptyList()
+    }
+    else -> emptyList()
+  }
+}

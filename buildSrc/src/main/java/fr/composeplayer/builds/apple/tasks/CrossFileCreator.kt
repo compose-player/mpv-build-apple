@@ -2,7 +2,6 @@ package fr.composeplayer.builds.apple.tasks
 
 import fr.composeplayer.builds.apple.misc.cpuFamily
 import fr.composeplayer.builds.apple.misc.mesonSubSystem
-import fr.composeplayer.builds.apple.misc.name
 import fr.composeplayer.builds.apple.misc.targetCpu
 import fr.composeplayer.builds.apple.utils.locationOf
 import java.io.File
@@ -11,14 +10,20 @@ class CrossFileCreator(
   private val context: BuildContext,
 ) {
 
-  val ldFlags: String
-    get() = ""
+  private val cFlags: String
+    get() = context.cFlags.joinToString(
+      separator = ", ",
+      transform = { "'$it'" },
+    )
 
-  val cFlags: String
-    get() = ""
+  private val ldFlags: String
+    get() = context.ldFlags.joinToString(
+      separator = ", ",
+      transform = { "'$it'" },
+    )
 
   fun create(): File {
-    val file = File(context.project.rootDir, "cross-files/${context.platform.name}-${context.platform.arch.name}.pc")
+    val file = File(context.project.rootDir, "cross-files/${context.buildTarget.platform.name}-${context.buildTarget.arch.name}.pc")
     if (file.exists()) return file
     file.parentFile.mkdirs()
     file.createNewFile()
@@ -28,8 +33,8 @@ class CrossFileCreator(
       cpp = '/usr/bin/clang++'
       objc = '/usr/bin/clang'
       objcpp = '/usr/bin/clang++'
-      ar = '${context.platform.locationOf("ar")}'
-      strip = '${context.platform.locationOf("strip")}'
+      ar = '${context.buildTarget.platform.locationOf("ar")}'
+      strip = '${context.buildTarget.platform.locationOf("strip")}'
       pkg-config = 'pkg-config'
       
       [properties]
@@ -38,10 +43,10 @@ class CrossFileCreator(
       
       [host_machine]
       system = 'darwin'
-      subsystem = '${context.platform.mesonSubSystem}'
+      subsystem = '${context.buildTarget.platform.mesonSubSystem}'
       kernel = 'xnu'
-      cpu_family = '${context.platform.arch.cpuFamily}'
-      cpu = '${context.platform.arch.targetCpu}'
+      cpu_family = '${context.buildTarget.arch.cpuFamily}'
+      cpu = '${context.buildTarget.arch.targetCpu}'
       endian = 'little'
       
       [built-in options]

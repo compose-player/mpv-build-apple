@@ -6,7 +6,6 @@ plugins {
 
 rootProject.name = "mpv-build-apple"
 
-
 include("ffmpeg")
 include("fribidi")
 include("harfbuzz")
@@ -20,3 +19,6 @@ include("placebo")
 include("mpv")
 include("unibreak")
 include("vulkan")
+include("spirvcross")
+include("shaderc")
+include("littlecms2")

@@ -14,19 +14,9 @@ kotlin { jvmToolchain(23) }
 afterEvaluate {
 
   registerBasicWorkflow(
-    dependency = Dependency.ass,
+    dependency = Dependency.lcms,
     targets = DEFAULT_TARGETS,
-    build = {
-      this.arguments = arrayOf(
-        "-Dlibunibreak=enabled",
-        "-Dcoretext=enabled",
-        "-Dfontconfig=disabled",
-        "-Ddirectwrite=disabled",
-        "-Dasm=disabled",
-        "-Dtest=disabled",
-        "-Dprofile=disabled",
-      )
-    }
+    build = { arguments = arrayOf() }
   )
 
 }

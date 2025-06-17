@@ -1,71 +1,106 @@
 package fr.composeplayer.builds.apple.tasks
 
+import fr.composeplayer.builds.apple.misc.BuildTarget
 import fr.composeplayer.builds.apple.misc.Dependency
-import fr.composeplayer.builds.apple.misc.Platform
 import fr.composeplayer.builds.apple.misc.cmakeSystemName
-import fr.composeplayer.builds.apple.misc.requirements
 import fr.composeplayer.builds.apple.misc.sdk
+import fr.composeplayer.builds.apple.utils.CommandScope
+import fr.composeplayer.builds.apple.utils.execExpectingResult
 import fr.composeplayer.builds.apple.utils.execExpectingSuccess
 import fr.composeplayer.builds.apple.utils.parallelism
 import org.gradle.api.DefaultTask
 import org.gradle.api.GradleException
+import org.gradle.api.provider.Property
 import org.gradle.api.tasks.Input
+import org.gradle.api.tasks.Optional
 import org.gradle.api.tasks.TaskAction
 
-open class AutoBuildTask : DefaultTask() {
+var AutoBuildTask.args: List<String>
+  get() = this.arguments.get().toList()
+  set(value) { this.arguments.set(value.toTypedArray()) }
 
-  @Input lateinit var platform: Platform
-  @Input lateinit var dependency: Dependency
-  @Input lateinit var arguments: Array<String>
+abstract class AutoBuildTask : DefaultTask() {
+
+  @get:Input
+  @get:Optional
+  abstract val skip: Property<Boolean>
+
+  @get:Input abstract val buildTarget: Property<BuildTarget>
+  @get:Input abstract val dependency: Property<Dependency>
+  @get:Input abstract val arguments: Property<Array<String>>
+
+  private val environement: Map<String, String> by lazy {
+    val context = buildContext(dependency.get(), buildTarget.get())
+    val cFlags = context.cFlags.joinToString(separator = " ")
+    val ldFlags = context.ldFlags.joinToString(separator = " ")
+    val pkgConfigPath = context.prefixDir.resolve("lib/pkgconfig")
+    val pkgConfigPathDefault = execExpectingResult { command = arrayOf("pkg-config", "--variable", "pc_path", "pkg-config") }
+    mutableMapOf(
+      "LC_CTYPE" to  "C",
+      "CC" to  "/usr/bin/clang",
+      "CXX" to  "/usr/bin/clang++",
+      "CURRENT_ARCH" to  context.buildTarget.arch.name,
+      "CFLAGS" to cFlags,
+      "CPPFLAGS" to cFlags,
+      "CXXFLAGS" to cFlags,
+      "LDFLAGS" to ldFlags,
+      "PKG_CONFIG_LIBDIR" to "${pkgConfigPath}:${pkgConfigPathDefault}",
+    )
+  }
 
   @TaskAction
   fun execute() {
-    println("AutoBuildTask.execute")
-    val context = buildContext(dependency, platform)
-    val meson = context.sourceDir.resolve("build.meson")
-    val waf = context.sourceDir.resolve("waf")
+    if (skip.isPresent && skip.get()) return
+    val context = buildContext(dependency.get(), buildTarget.get())
+    val meson = context.sourceDir.resolve("meson.build")
     val autogen = context.sourceDir.resolve("autogen")
     val cMakeLists = context.sourceDir.resolve("CMakeLists.txt")
     val configure = context.sourceDir.resolve("configure")
     val bootstrap = context.sourceDir.resolve("bootstrap")
 
-    for (dep in dependency.requirements) {
-      val c = buildContext(dep, platform)
-      if ( c.buildDir.exists() ) continue
-      throw GradleException("Component [$dependency] requires [$dep] to be built before")
+    if ( !context.sourceDir.exists() ) {
+      throw GradleException("No source found for component $dependency")
     }
 
     context.buildDir.mkdirs()
     context.prefixDir.mkdirs()
 
+    val crossfile = CrossFileCreator(context).create()
+
     when {
       meson.exists() -> {
-        val crossfile = CrossFileCreator(context).create()
+        logger.info("Building component [$dependency] with meson")
         execExpectingSuccess {
+          env.applyFrom(environement)
           workingDir = context.sourceDir
           command = arrayOf(
             "meson", "setup", context.buildDir.absolutePath,
             "--default-library=both",
             "--cross-file", crossfile.absolutePath,
-            *arguments,
+            *arguments.get(),
           )
         }
         execExpectingSuccess {
+          env.applyFrom(environement)
           workingDir = context.buildDir
           command = arrayOf("meson", "compile", "--clean")
         }
         execExpectingSuccess {
+          env.applyFrom(environement)
           workingDir = context.buildDir
           command = arrayOf("meson", "compile", "--verbose")
         }
         execExpectingSuccess {
+          env.applyFrom(environement)
           workingDir = context.buildDir
           command = arrayOf("meson", "install")
         }
       }
       else -> {
         if (autogen.exists()) {
+          logger.info("Running autogen for component [$dependency]")
           execExpectingSuccess {
+            env.applyFrom(environement)
             env["NOCONFIGURE"] = "1"
             workingDir = context.sourceDir
             command = arrayOf(autogen.absolutePath)
@@ -73,49 +108,57 @@ open class AutoBuildTask : DefaultTask() {
         }
         when {
           cMakeLists.exists() -> {
-            println("context.buildDir = ${context.buildDir}")
-            println("context.sourceDir = ${context.sourceDir}")
+            logger.info("Runing cmake for component [$dependency]")
             execExpectingSuccess {
+              env.applyFrom(environement)
               workingDir = context.buildDir
               command = arrayOf(
                 "cmake", context.sourceDir.absolutePath,
                 "-DCMAKE_VERBOSE_MAKEFILE=0",
                 "-DCMAKE_BUILD_TYPE=Release",
-                "-DCMAKE_OSX_SYSROOT=${platform.sdk.lowercase()}",
-                "-DCMAKE_OSX_ARCHITECTURES=${platform.arch.name}",
-                "-DCMAKE_SYSTEM_NAME=${platform.cmakeSystemName}",
-                "-DCMAKE_SYSTEM_PROCESSOR=${platform.arch.name}",
+                "-DCMAKE_OSX_SYSROOT=${buildTarget.get().platform.sdk.lowercase()}",
+                "-DCMAKE_OSX_ARCHITECTURES=${buildTarget.get().arch.name}",
+                "-DCMAKE_SYSTEM_NAME=${buildTarget.get().platform.cmakeSystemName}",
+                "-DCMAKE_SYSTEM_PROCESSOR=${buildTarget.get().arch.name}",
                 "-DCMAKE_INSTALL_PREFIX=${context.prefixDir.absolutePath}",
                 "-DBUILD_SHARED_LIBS=ON",
-                *arguments,
+                "-DCMAKE_POLICY_VERSION_MINIMUM=3.5",
+                *arguments.get(),
               )
             }
           }
           else -> {
             if (!configure.exists() && bootstrap.exists()) {
+              logger.info("Runing bootstrap for component [$dependency]")
               execExpectingSuccess {
+                env.applyFrom(environement)
                 workingDir = context.sourceDir
                 command = arrayOf(bootstrap.absolutePath)
               }
             }
             if (!configure.exists()) {
-              throw GradleException("No build system found for dependency: ${dependency.name}")
+              throw GradleException("No build system found for dependency: ${dependency}")
             }
+            logger.info("Runing configure for component [$dependency]")
             execExpectingSuccess {
+              env.applyFrom(environement)
               workingDir = context.buildDir
               command = arrayOf(
                 configure.absolutePath,
                 "--prefix=${context.prefixDir.absolutePath}",
-                *arguments,
+                *arguments.get(),
               )
             }
           }
         }
+        logger.info("Runing make for component [$dependency]")
         execExpectingSuccess {
+          env.applyFrom(environement)
           workingDir = context.buildDir
           command = arrayOf("make", "-j$parallelism")
         }
         execExpectingSuccess {
+          env.applyFrom(environement)
           workingDir = context.buildDir
           command = arrayOf("make", "-j$parallelism", "install")
         }
@@ -123,4 +166,8 @@ open class AutoBuildTask : DefaultTask() {
     }
   }
 
+}
+
+fun CommandScope.Environment.applyFrom(map: Map<String, String?>) {
+  for (entry in map) this[entry.key] = entry.value
 }

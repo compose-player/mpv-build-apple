@@ -1,11 +1,7 @@
-import fr.composeplayer.builds.apple.misc.Architecture
 import fr.composeplayer.builds.apple.misc.Dependency
-import fr.composeplayer.builds.apple.misc.Platform
 import fr.composeplayer.builds.apple.misc.host
-import fr.composeplayer.builds.apple.misc.name
-import fr.composeplayer.builds.apple.tasks.AutoBuildTask
-import fr.composeplayer.builds.apple.tasks.CloneTask
-import fr.composeplayer.builds.apple.tasks.applyFrom
+import fr.composeplayer.builds.apple.utils.DEFAULT_TARGETS
+import fr.composeplayer.builds.apple.utils.registerBasicWorkflow
 
 plugins {
   kotlin("jvm")
@@ -19,47 +15,18 @@ kotlin { jvmToolchain(23) }
 
 afterEvaluate {
 
-  val platforms = listOf(
-    Platform.MacOS(Architecture.arm64),
-    Platform.MacOS(Architecture.x86_64),
-    Platform.IOS(Architecture.arm64),
-  )
-
-  tasks.getByName("clean") {
-    doLast {
-      val file = File(rootProject.rootDir, "vendor/${Dependency.unibreak.name}")
-      if (file.exists()) file.deleteRecursively()
-    }
-  }
-
-  tasks.register<CloneTask>("clone") {
-    applyFrom(Dependency.unibreak)
-  }
-
-  val buildAll by tasks.register<Task>("buildAll")
-
-  for (platform in platforms) {
-
-    tasks.register(
-      name = "build[${platform.name}][${platform.arch.name}]",
-      type = AutoBuildTask::class
-    ) {
-      buildAll.dependsOn(this)
-      this.dependency = Dependency.unibreak
-      this.platform = platform
+  registerBasicWorkflow(
+    targets = DEFAULT_TARGETS,
+    dependency = Dependency.unibreak,
+    build = {
       this.arguments = arrayOf(
         "--enable-static",
-        "--disable-shared",
+        "--enable-shared",
         "--disable-fast-install",
         "--disable-dependency-tracking",
-        "--host=${platform.host}",
+        "--host=${buildTarget.get().host}",
       )
-    }
-
-  }
-
-
+    },
+  )
 
 }
-
-

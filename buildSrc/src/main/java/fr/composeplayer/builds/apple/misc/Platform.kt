@@ -1,26 +1,14 @@
 package fr.composeplayer.builds.apple.misc
 
-sealed interface Platform {
-  val arch: Architecture
-  data class IOS(override val arch: Architecture) : Platform
-  data class IosSimulator(override val arch: Architecture) : Platform
-  data class MacOS(override val arch: Architecture) : Platform
-}
-
+enum class Platform { ios, isimulator, macos }
+data class BuildTarget(val platform: Platform, val arch: Architecture)
 enum class Architecture { arm64, x86_64 }
-
-val Platform.name: String
-  get() = when (this) {
-    is Platform.IOS -> "ios"
-    is Platform.IosSimulator -> "isimulator"
-    is Platform.MacOS -> "macos"
-  }
 
 val Platform.mesonSubSystem: String
   get() = when (this) {
-    is Platform.IOS -> "ios"
-    is Platform.IosSimulator -> "ios-simulator"
-    is Platform.MacOS -> "macos"
+    Platform.ios -> "ios"
+    Platform.isimulator -> "ios-simulator"
+    Platform.macos -> "macos"
   }
 
 val Architecture.cpuFamily: String
@@ -37,32 +25,39 @@ val Architecture.targetCpu: String
 
 val Platform.sdk: String
   get() = when (this) {
-    is Platform.IOS -> "iPhoneOS"
-    is Platform.IosSimulator -> "iPhoneSimulator"
-    is Platform.MacOS -> "MacOSX"
+    Platform.ios -> "iPhoneOS"
+    Platform.isimulator -> "iPhoneSimulator"
+    Platform.macos -> "MacOSX"
   }
 
 val Platform.cmakeSystemName: String
   get() = when (this) {
-    is Platform.IOS, is Platform.IosSimulator -> "ios"
-    is Platform.MacOS -> "Darwin"
+    Platform.ios, Platform.isimulator -> "iOS"
+    Platform.macos -> "Darwin"
   }
 
-val Platform.host: String
-  get() = when (this) {
-    is Platform.IOS, is Platform.IosSimulator -> when (arch) {
+val BuildTarget.host: String
+  get() = when (this.platform) {
+    Platform.ios, Platform.isimulator -> when (arch) {
       Architecture.arm64 -> "x86_64-ios-darwin"
       Architecture.x86_64 -> "arm64-ios-darwin"
     }
-    is Platform.MacOS -> when (arch) {
+    Platform.macos -> when (arch) {
       Architecture.arm64 -> "x86_64-apple-darwin"
       Architecture.x86_64 -> "arm64-apple-darwin"
     }
   }
 
-val Platform.rustTarget: String
+val BuildTarget.rustTarget: String
+  get() = when (platform) {
+    Platform.ios -> "${arch.cpuFamily}-apple-ios"
+    Platform.isimulator -> "${arch.cpuFamily}-apple-ios-sim"
+    Platform.macos -> "${arch.cpuFamily}-apple-darwin"
+  }
+
+val Platform.buildTag: String
   get() = when (this) {
-    is Platform.IOS -> "${arch.cpuFamily}-apple-ios"
-    is Platform.IosSimulator -> "${arch.cpuFamily}-apple-ios-sim"
-    is Platform.MacOS -> "${arch.cpuFamily}-apple-darwin"
+    Platform.ios -> "ios"
+    Platform.isimulator -> "iossim"
+    Platform.macos -> "macos"
   }

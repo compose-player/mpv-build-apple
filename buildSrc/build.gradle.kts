@@ -13,6 +13,10 @@ repositories {
 }
 
 
+dependencies {
+  implementation("commons-cli:commons-cli:1.9.0")
+}
+
 java {
   val stringValue = libs.versions.jdk.get()
   val javaVersion = JavaVersion.toVersion(stringValue)

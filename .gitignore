@@ -48,3 +48,5 @@ bin/
 /builds/
 /binaries/
 /cross-files/
+/fat-frameworks/
+/xcframeworks/
