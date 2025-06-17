@@ -33,7 +33,16 @@ abstract class AutoBuildTask : DefaultTask() {
     val context = buildContext(dependency.get(), buildTarget.get())
     val cFlags = context.cFlags.joinToString(separator = " ")
     val ldFlags = context.ldFlags.joinToString(separator = " ")
-    val pkgConfigPath = context.prefixDir.resolve("lib/pkgconfig")
+    val pkgConfigPath = let {
+      val list = buildList {
+        for (dep in Dependency.values()) {
+          val _context = buildContext(dep, context.buildTarget)
+          val pkgConfig = _context.prefixDir.resolve("lib/pkgconfig")
+          add(pkgConfig.absolutePath)
+        }
+      }
+      list.joinToString(":")
+    }
     val pkgConfigPathDefault = execExpectingResult { command = arrayOf("pkg-config", "--variable", "pc_path", "pkg-config") }
     mutableMapOf(
       "LC_CTYPE" to  "C",
@@ -44,8 +53,8 @@ abstract class AutoBuildTask : DefaultTask() {
       "CPPFLAGS" to cFlags,
       "CXXFLAGS" to cFlags,
       "LDFLAGS" to ldFlags,
-      "PKG_CONFIG_LIBDIR" to "${pkgConfigPath.absolutePath}:${pkgConfigPathDefault}",
-      "PKG_CONFIG_PATH" to pkgConfigPath.absolutePath,
+      "PKG_CONFIG_LIBDIR" to "${pkgConfigPath}:${pkgConfigPathDefault}",
+      //"PKG_CONFIG_PATH" to pkgConfigPath.absolutePath,
     )
   }
 

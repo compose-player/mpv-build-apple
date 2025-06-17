@@ -74,6 +74,7 @@ registerBasicWorkflow(
             else -> throw GradleException("Unknown bin name: $sub")
           }
           val destination = context.prefixDir.resolve("lib/${sourceFile.name}")
+          if (!destination.parentFile.exists) destination.parentFile.mkdirs()
           if (destination.exists()) continue
           sourceFile.copyTo(destination)
         }
@@ -98,15 +99,14 @@ registerBasicWorkflow(
           Cflags: -I${'$'}{includedir}
         """
         val pcFile = context.prefixDir.resolve("lib/pkgconfig/vulkan.pc")
+        if (!pcFile.parentFile.exists) pcFile.parentFile.mkdirs()
         pcFile.writeText( pcContent.trimIndent() )
 
-        val vulkanIncludes = sourceDir.resolve("Package/Release/MoltenVK/include")
-          .listFiles()!!
-          .filter(File::isDirectory)
+        val vulkanIncludes = sourceDir.resolve("Package/Release/MoltenVK/include").listFiles()!!
+
         for (dir in vulkanIncludes) {
           val destination = context.prefixDir.resolve("include/${dir.name}")
-          if (destination.exists()) continue
-          dir.copyRecursively(destination)
+          dir.copyRecursively(target = destination, overwrite = true)
         }
       }
     }

@@ -24,9 +24,7 @@ class CrossFileCreator(
 
   fun create(): File {
     val file = File(context.project.rootDir, "cross-files/${context.buildTarget.platform.name}-${context.buildTarget.arch.name}.pc")
-    if (file.exists()) return file
     file.parentFile.mkdirs()
-    file.createNewFile()
     val content = """
       [binaries]
       c = '/usr/bin/clang'
