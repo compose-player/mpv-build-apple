@@ -1,5 +1,6 @@
 import fr.composeplayer.builds.apple.misc.Dependency
 import fr.composeplayer.builds.apple.misc.Platform
+import fr.composeplayer.builds.apple.tasks.CreateFramework
 import fr.composeplayer.builds.apple.tasks.args
 import fr.composeplayer.builds.apple.utils.*
 
@@ -59,4 +60,15 @@ registerBasicWorkflow(
       }
     }
   },
+  createFramework = {
+    doLast {
+      if (type == CreateFramework.FrameworkType.static) return@doLast
+      execExpectingSuccess {
+        workingDir = project.rootDir.resolve("fat-frameworks/shared/$platform/Mpv.framework")
+        command = arrayOf(
+          "install_name_tool", "-change", "@rpath/libuchardet.0.dylib", "@rpath/Uchardet", "Mpv"
+        )
+      }
+    }
+  }
 )

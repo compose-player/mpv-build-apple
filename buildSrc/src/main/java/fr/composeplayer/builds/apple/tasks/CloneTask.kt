@@ -41,7 +41,6 @@ open class CloneTask @Inject constructor(
       }
       val patches = patchDir.listFiles()!!
       for (patch in patches) {
-        println("patch.extension = ${patch.extension}")
         if (patch.extension != "patch") continue
         logger.lifecycle("Adding patch $patch to component [$dirName]")
         execExpectingSuccess {

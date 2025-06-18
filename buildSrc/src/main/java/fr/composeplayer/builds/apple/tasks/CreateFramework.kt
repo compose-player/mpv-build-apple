@@ -3,18 +3,22 @@ package fr.composeplayer.builds.apple.tasks
 import fr.composeplayer.builds.apple.misc.Architecture
 import fr.composeplayer.builds.apple.misc.BuildTarget
 import fr.composeplayer.builds.apple.misc.Dependency
+import fr.composeplayer.builds.apple.misc.FrameworkCreationData
 import fr.composeplayer.builds.apple.misc.Platform
 import fr.composeplayer.builds.apple.misc.frameworks
 import fr.composeplayer.builds.apple.misc.sdk
 import fr.composeplayer.builds.apple.utils.BUILD_VERSION
+import fr.composeplayer.builds.apple.utils.execExpectingResult
 import fr.composeplayer.builds.apple.utils.execExpectingSuccess
 import fr.composeplayer.builds.apple.utils.exists
 import fr.composeplayer.builds.apple.utils.minVersion
 import org.gradle.api.DefaultTask
+import org.gradle.api.GradleException
 import org.gradle.api.provider.Property
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Optional
 import org.gradle.api.tasks.TaskAction
+import org.gradle.kotlin.dsl.support.uppercaseFirstChar
 import java.io.File
 
 abstract class CreateFramework : DefaultTask() {
@@ -41,6 +45,7 @@ abstract class CreateFramework : DefaultTask() {
   fun execute() {
     if (skip.isPresent && skip.get()) return
     for (framework in dependency.frameworks) {
+      if (framework.dynamicOnly && type == FrameworkType.static) continue
       val installDir = project.rootDir.resolve("fat-frameworks/$type/$platform/${framework.frameworkName}.framework")
       if (installDir.exists) {
         installDir.deleteRecursively()
@@ -58,15 +63,22 @@ abstract class CreateFramework : DefaultTask() {
           overwrite = true,
         )
         val binaryExtension = if (type == FrameworkType.static) "a" else "dylib"
-        val binaryFile = context.prefixDir
-          .resolve("lib")
-          .listFiles()
-          .first {
-            it.name.equals("lib${framework.frameworkName}.$binaryExtension", true)
-                    || it.name.equals("${framework.frameworkName}.$binaryExtension", true)
-                    || it.name.equals("${framework.frameworkName}_shared.$binaryExtension", true)
-                    || it.name.equals("lib${framework.frameworkName}_shared.$binaryExtension", true)
+        val binaryFile = let {
+          val names = when {
+            framework.frameworkName == "Shaderc_combined" -> setOf(
+              "libshaderc_combined.$binaryExtension",
+              "libshaderc_shared.$binaryExtension"
+            )
+            else -> setOf(
+              "lib${framework.frameworkName}.$binaryExtension".lowercase(),
+              "${framework.frameworkName}.$binaryExtension".lowercase(),
+            )
           }
+          context.prefixDir
+            .resolve("lib")
+            .listFiles()
+            .first { it.name.lowercase() in names }
+        }
         command += binaryFile.absolutePath
       }
       command += listOf("-output", installDir.resolve(framework.frameworkName).absolutePath)
@@ -88,6 +100,12 @@ abstract class CreateFramework : DefaultTask() {
   }
 
 }
+
+
+
+
+
+
 
 fun modulemap(
   frameworkName: String,

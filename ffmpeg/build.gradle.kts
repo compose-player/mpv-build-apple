@@ -1,10 +1,14 @@
 import fr.composeplayer.builds.apple.misc.Architecture
 import fr.composeplayer.builds.apple.misc.Dependency
 import fr.composeplayer.builds.apple.misc.cpuFamily
+import fr.composeplayer.builds.apple.misc.frameworks
+import fr.composeplayer.builds.apple.tasks.CreateFramework
 import fr.composeplayer.builds.apple.tasks.args
 import fr.composeplayer.builds.apple.tasks.buildContext
 import fr.composeplayer.builds.apple.utils.DEFAULT_TARGETS
 import fr.composeplayer.builds.apple.utils.add
+import fr.composeplayer.builds.apple.utils.execExpectingResult
+import fr.composeplayer.builds.apple.utils.execExpectingSuccess
 import fr.composeplayer.builds.apple.utils.registerBasicWorkflow
 
 plugins {
@@ -108,6 +112,40 @@ registerBasicWorkflow(
     }
 
   },
+  createFramework = {
+    doLast {
+      if (type == CreateFramework.FrameworkType.static) return@doLast
+      for (framework in dependency.frameworks) {
+        val dir = project.rootDir.resolve("fat-frameworks/shared/$platform/${framework.frameworkName}.framework")
+        val links = let {
+          val result = execExpectingResult {
+            workingDir = dir
+            command = arrayOf("otool", "-L", framework.frameworkName)
+          }
+          result.lines()
+            .drop(1)
+            .mapNotNull { it.trim().split(" ").firstOrNull()?.trim() }
+        }
+        for (link in links) {
+          val newPath = when {
+            link.startsWith("@rpath/libshaderc_shared.") -> "@rpath/Shaderc_combined"
+            link.startsWith("@rpath/libmbedtls.") -> "@rpath/Mbedtls"
+            link.startsWith("@rpath/libmbedx509.") -> "@rpath/Mbedx509"
+            link.startsWith("@rpath/libmbedcrypto.") -> "@rpath/Mbedcrypto"
+            link.startsWith("@rpath/libeverest.") -> "@rpath/Everest"
+            link.startsWith("@rpath/libp256m.") -> "@rpath/P256m"
+            else -> continue
+          }
+          execExpectingSuccess {
+            workingDir = dir
+            command = arrayOf(
+              "install_name_tool", "-change", link, newPath, framework.frameworkName
+            )
+          }
+        }
+      }
+    }
+  }
 )
 
 private val ffmpegConfigurers: List<String>

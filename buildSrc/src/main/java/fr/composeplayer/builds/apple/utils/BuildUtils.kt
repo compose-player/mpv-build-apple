@@ -7,10 +7,12 @@ import org.gradle.api.Project
 import org.gradle.api.Task
 import org.gradle.kotlin.dsl.getValue
 import org.gradle.kotlin.dsl.getting
+import org.gradle.kotlin.dsl.support.uppercaseFirstChar
 import org.gradle.process.ExecOperations
 import org.gradle.process.ExecSpec
 import java.io.File
 import kotlin.concurrent.thread
+import kotlin.text.get
 
 val BUILD_VERSION = "1.0.0"
 
@@ -80,7 +82,7 @@ fun Task.execExpectingSuccess(
 ) {
   val builder = ProcessBuilder()
   ProcessBuilderScope(builder).apply(block)
-  logger.lifecycle("Executing command:")
+  logger.lifecycle("\uD83D\uDEE0\uFE0F Executing command:")
   logger.lifecycle(builder.command().joinToString(" "))
   val process = builder.start()
   val thread = thread { process.inputStream.copyTo(System.out) }
@@ -96,7 +98,7 @@ fun Task.execExpectingResult(
 ): String {
   val builder = ProcessBuilder()
   ProcessBuilderScope(builder).apply(block)
-  logger.lifecycle("Executing command:")
+  logger.lifecycle("\uD83D\uDEE0\uFE0F Executing command:")
   logger.lifecycle(builder.command().joinToString(" "))
   val process = builder.start().apply {
     errorStream.copyTo(System.err)
@@ -110,7 +112,7 @@ fun Task.execExpectingResult(
 
 }
 
-val parallelism: Int get() = 4
+val parallelism: Int get() = 8
 
 fun Platform.locationOf(toolName: String): String {
   return when (toolName) {
@@ -164,7 +166,7 @@ val BuildTarget.ldFlags: List<String>
       "-lc++",
       "-arch", arch.name,
       "-isysroot", platform.isysroot,
-      "-target", deploymentTarget, platform.osVersionMin
+      "-target", deploymentTarget, platform.osVersionMin,
     )
   }
 
@@ -194,12 +196,8 @@ fun Project.registerBasicWorkflow(
   prebuild: Task.(target: BuildTarget) -> Unit = { enabled = false },
   build: AutoBuildTask.() -> Unit,
   postBuild: Task.(target: BuildTarget) -> Unit = { enabled = false },
-  createFramework: CreateFramework.() -> Unit = {
-    this.enabled = dependency.frameworks.isNotEmpty()
-  },
-  createXcframework: CreateXcFramework.() -> Unit = {
-    this.enabled = dependency.frameworks.isNotEmpty()
-  },
+  createFramework: CreateFramework.() -> Unit = { this.enabled = dependency.frameworks.isNotEmpty() },
+  createXcframework: CreateXcFramework.() -> Unit = { this.enabled = dependency.frameworks.isNotEmpty() },
 ) {
 
   val buildTargets = targets.flatMap { (platform, archs) -> archs.map { BuildTarget(platform, it) } }
@@ -229,17 +227,18 @@ fun Project.registerBasicWorkflow(
 
   val clean by tasks.getting {
     doLast {
+      rootDir.resolve("vendor/$dependency").deleteRecursively()
       rootDir.resolve("binaries/${dependency}").deleteRecursively()
       rootDir.resolve("builds/${dependency}").deleteRecursively()
 
       for (framework in dependency.frameworks) {
         val platforms = buildList {
-          addAll( rootDir.resolve("fat-frameworks/static").listFiles() )
-          addAll( rootDir.resolve("fat-frameworks/shared").listFiles() )
+          addAll( rootDir.resolve("fat-frameworks/static").listFiles().orEmpty() )
+          addAll( rootDir.resolve("fat-frameworks/shared").listFiles().orEmpty() )
         }
         for (dir in platforms) {
           for (frameworkDir in dir.listFiles()) {
-            if (frameworkDir.name == "${framework.frameworkName}.framework") dir.deleteRecursively()
+            if (frameworkDir.name == "${framework.frameworkName}.framework") frameworkDir.deleteRecursively()
           }
         }
         for ( type in listOf("static", "shared") ) {
@@ -276,6 +275,7 @@ fun Project.registerBasicWorkflow(
         this.group = group
         this.dependency.set(dependency)
         this.buildTarget.set(target)
+        this.enabled = !buildContext(dependency, target).prefixDir.exists
         build.invoke(this)
       },
     )
@@ -319,6 +319,57 @@ fun Project.registerBasicWorkflow(
         createFramework.invoke(this)
       },
     )
+
+    val installPath by tasks.register(
+      /* name = */ "installPath[$platform]",
+      /* type = */ Task::class.java,
+      /* configurationAction = */ {
+        this.group = group
+        doLast {
+          for (framework in dependency.frameworks) {
+            val newName = "@rpath/${framework.frameworkName}"
+            val file = rootDir.resolve("fat-frameworks/shared/$platform/${framework.frameworkName}.framework")
+            val installName = let {
+              val result = execExpectingResult {
+                workingDir = file
+                command = arrayOf("otool", "-D", framework.frameworkName)
+              }
+              result.trim().lines()[1].split(" ").first()
+            }
+            logger.lifecycle("Replacing $installName with $newName")
+              execExpectingSuccess {
+                workingDir = file
+                command = arrayOf("install_name_tool", "-id", newName, framework.frameworkName)
+              }
+            val links = let {
+              val result = execExpectingResult {
+                workingDir = file
+                command = arrayOf("otool", "-L", framework.frameworkName)
+              }
+              result.lines().drop(1)
+            }
+            for (rawLink in links) {
+              val link = rawLink.trim().split(" ").first().trim()
+              val isInvalid = link.startsWith(project.rootDir.absolutePath)
+              if (isInvalid) {
+                val dylibFile = File(link)
+                val newName = dylibFile.nameWithoutExtension.split(".").first().removePrefix("lib").uppercaseFirstChar()
+                logger.lifecycle("\uD83D\uDC1B Found an invalid link: [$link]")
+                logger.lifecycle("\uD83D\uDD27 Replacing link: [$link] -> [@rpath/$newName]")
+                  execExpectingSuccess {
+                    workingDir = file
+                    command = arrayOf(
+                      "install_name_tool", "-change", link, "@rpath/$newName", framework.frameworkName
+                    )
+                  }
+              }
+            }
+          }
+
+        }
+      }
+    )
+    shared.finalizedBy(installPath)
     createDynamicFrameworks.dependsOn(shared)
     createStaticFrameworks.dependsOn(static)
   }
@@ -348,6 +399,17 @@ fun Project.registerBasicWorkflow(
 
   createXcframeworkTask.dependsOn(createStaticXcframework, createDynamicXcframework)
 
+  rootProject.tasks.register(
+    /* name = */ "assemble[$name]",
+    /* type = */ Task::class.java,
+    /* configurationAction = */ {
+      this.group = "mpv-build"
+      buildAllTask.mustRunAfter(cloneTask)
+      createAllFrameworksTask.mustRunAfter(buildAllTask)
+      createXcframeworkTask.mustRunAfter(createAllFrameworksTask)
+      dependsOn(cloneTask, buildAllTask, createAllFrameworksTask, createXcframeworkTask)
+    }
+  )
 
 
 }

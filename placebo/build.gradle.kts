@@ -1,5 +1,7 @@
 import fr.composeplayer.builds.apple.misc.Dependency
+import fr.composeplayer.builds.apple.tasks.CreateFramework
 import fr.composeplayer.builds.apple.utils.DEFAULT_TARGETS
+import fr.composeplayer.builds.apple.utils.execExpectingSuccess
 import fr.composeplayer.builds.apple.utils.registerBasicWorkflow
 
 plugins {
@@ -30,4 +32,15 @@ registerBasicWorkflow(
       "-Ddovi=enabled", "-Dlibdovi=enabled"
     )
   },
+  createFramework = {
+    doLast {
+      if (type == CreateFramework.FrameworkType.static) return@doLast
+      execExpectingSuccess {
+        workingDir = project.rootDir.resolve("fat-frameworks/shared/$platform/Placebo.framework")
+        command = arrayOf(
+          "install_name_tool", "-change", "@rpath/libshaderc_shared.1.dylib", "@rpath/Shaderc_combined", "Placebo"
+        )
+      }
+    }
+  }
 )

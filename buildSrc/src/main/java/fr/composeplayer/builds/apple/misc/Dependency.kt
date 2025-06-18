@@ -106,7 +106,8 @@ val Dependency.versionName: String
 
 data class FrameworkCreationData(
   val frameworkName: String,
-  val excludeHeaders: List<String>,
+  val excludeHeaders: List<String> = emptyList(),
+  val dynamicOnly: Boolean = false,
 )
 
 val Dependency.frameworks: List<FrameworkCreationData>
@@ -117,18 +118,9 @@ val Dependency.frameworks: List<FrameworkCreationData>
           frameworkName = "Avcodec",
           excludeHeaders = listOf("xvmc", "vdpau", "qsv", "dxva2", "d3d11va", "d3d12va"),
         ),
-        FrameworkCreationData(
-          frameworkName = "Avdevice",
-          excludeHeaders = listOf(),
-        ),
-        FrameworkCreationData(
-          frameworkName = "Avfilter",
-          excludeHeaders = listOf(),
-        ),
-        FrameworkCreationData(
-          frameworkName = "Avformat",
-          excludeHeaders = listOf(),
-        ),
+        FrameworkCreationData("Avdevice"),
+        FrameworkCreationData("Avfilter"),
+        FrameworkCreationData("Avformat"),
         FrameworkCreationData(
           frameworkName = "Avutil",
           excludeHeaders = listOf(
@@ -143,95 +135,47 @@ val Dependency.frameworks: List<FrameworkCreationData>
             "hwcontext_cuda"
           ),
         ),
-        FrameworkCreationData(
-          frameworkName = "Swresample",
-          excludeHeaders = listOf(),
-        ),
-        FrameworkCreationData(
-          frameworkName = "Swscale",
-          excludeHeaders = listOf(),
-        ),
+        FrameworkCreationData("Swresample"),
+        FrameworkCreationData("Swscale"),
       )
-      Dependency.shaderc -> add(
-        FrameworkCreationData(
-          frameworkName = "Shaderc_combined",
-          excludeHeaders = emptyList(),
-        )
-      )
+      Dependency.shaderc -> this += FrameworkCreationData("Shaderc_combined")
       Dependency.spirvcross -> return@buildList
-      Dependency.ass -> add(
-        FrameworkCreationData(
-          frameworkName = "Ass",
-          excludeHeaders = emptyList(),
-        )
-      )
-      Dependency.dav1d -> add(
-        FrameworkCreationData(
-          frameworkName = "Dav1d",
-          excludeHeaders = emptyList(),
-        ),
-      )
-      Dependency.placebo -> add(
-        FrameworkCreationData(
-          frameworkName = "Placebo",
-          excludeHeaders = emptyList(),
-        ),
-      )
-      Dependency.freetype -> add(
-        FrameworkCreationData(
-          frameworkName = "Freetype",
-          excludeHeaders = emptyList(),
-        )
-      )
-      Dependency.harfbuzz -> add(
-        FrameworkCreationData(
-          frameworkName = "Harfbuzz",
-          excludeHeaders = emptyList(),
-        )
-      )
-      Dependency.fribidi -> add(
-        FrameworkCreationData(
-          frameworkName = "Fribidi",
-          excludeHeaders = emptyList(),
-        )
-      )
+      Dependency.ass -> this += FrameworkCreationData("Ass")
+      Dependency.dav1d -> this += FrameworkCreationData("Dav1d")
+      Dependency.placebo -> this += FrameworkCreationData("Placebo")
+      Dependency.freetype -> this += FrameworkCreationData("Freetype")
+      Dependency.harfbuzz -> this += FrameworkCreationData("Harfbuzz")
+      Dependency.fribidi -> this += FrameworkCreationData("Fribidi")
       Dependency.mbedtls -> add(
         FrameworkCreationData(
           frameworkName = "Mbedtls",
           excludeHeaders = emptyList(),
-        )
+        ),
+        FrameworkCreationData(
+          frameworkName = "Mbedx509",
+          excludeHeaders = emptyList(),
+        ),
+        FrameworkCreationData(
+          frameworkName = "Mbedcrypto",
+          excludeHeaders = emptyList(),
+        ),
+        FrameworkCreationData(
+          frameworkName = "Everest",
+          excludeHeaders = emptyList(),
+          dynamicOnly = true,
+        ),
+        FrameworkCreationData(
+          frameworkName = "P256m",
+          excludeHeaders = emptyList(),
+          dynamicOnly = true,
+        ),
       )
       Dependency.moltenvk -> return@buildList
-      Dependency.uchardet -> add(
-        FrameworkCreationData(
-          frameworkName = "Uchardet",
-          excludeHeaders = emptyList(),
-        )
-      )
-      Dependency.mpv -> add(
-        FrameworkCreationData(
-          frameworkName = "Mpv",
-          excludeHeaders = emptyList(),
-        )
-      )
-      Dependency.unibreak -> add(
-        FrameworkCreationData(
-          frameworkName = "Unibreak",
-          excludeHeaders = emptyList(),
-        )
-      )
-      Dependency.dovi -> add(
-        FrameworkCreationData(
-          frameworkName = "Dovi",
-          excludeHeaders = emptyList(),
-        )
-      )
-      Dependency.lcms2 -> add(
-        FrameworkCreationData(
-          frameworkName = "Lcms2",
-          excludeHeaders = emptyList(),
-        )
-      )
+      Dependency.uchardet -> this += FrameworkCreationData("Uchardet")
+      Dependency.mpv -> this += FrameworkCreationData("Mpv")
+      Dependency.unibreak -> this += FrameworkCreationData("Unibreak")
+      Dependency.dovi -> this += FrameworkCreationData("Dovi")
+      Dependency.lcms2 -> this += FrameworkCreationData("Lcms2")
     }
   }
 

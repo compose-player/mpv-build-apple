@@ -35,6 +35,7 @@
             <option value="$PROJECT_DIR$/placebo" />
             <option value="$PROJECT_DIR$/shaderc" />
             <option value="$PROJECT_DIR$/spirvcross" />
+            <option value="$PROJECT_DIR$/test-jvm" />
             <option value="$PROJECT_DIR$/uchardet" />
             <option value="$PROJECT_DIR$/unibreak" />
             <option value="$PROJECT_DIR$/vulkan" />

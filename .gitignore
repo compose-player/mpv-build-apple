@@ -44,9 +44,12 @@ bin/
 ### Mac OS ###
 .DS_Store
 
+build_all.sh
+
 /vendor/
 /builds/
 /binaries/
 /cross-files/
 /fat-frameworks/
 /xcframeworks/
+/test-jvm/src/main/resources/libs/

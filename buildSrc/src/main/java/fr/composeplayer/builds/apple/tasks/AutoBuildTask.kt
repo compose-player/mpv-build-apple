@@ -7,6 +7,7 @@ import fr.composeplayer.builds.apple.misc.sdk
 import fr.composeplayer.builds.apple.utils.CommandScope
 import fr.composeplayer.builds.apple.utils.execExpectingResult
 import fr.composeplayer.builds.apple.utils.execExpectingSuccess
+import fr.composeplayer.builds.apple.utils.exists
 import fr.composeplayer.builds.apple.utils.parallelism
 import org.gradle.api.DefaultTask
 import org.gradle.api.GradleException
@@ -58,6 +59,7 @@ abstract class AutoBuildTask : DefaultTask() {
     )
   }
 
+
   @TaskAction
   fun execute() {
     if (skip.isPresent && skip.get()) return
@@ -68,111 +70,115 @@ abstract class AutoBuildTask : DefaultTask() {
     val configure = context.sourceDir.resolve("configure")
     val bootstrap = context.sourceDir.resolve("bootstrap")
 
-    if ( !context.sourceDir.exists() ) {
-      throw GradleException("No source found for component $dependency")
-    }
+    if (!context.sourceDir.exists) throw GradleException("No source found for component $dependency")
 
-    context.buildDir.mkdirs()
-    context.prefixDir.mkdirs()
+    try {
+      context.buildDir.mkdirs()
+      context.prefixDir.mkdirs()
 
-    val crossfile = CrossFileCreator(context).create()
+      val crossfile = CrossFileCreator(context).create()
 
-    when {
-      meson.exists() -> {
-        logger.info("Building component [$dependency] with meson")
-        execExpectingSuccess {
-          env.applyFrom(environement)
-          workingDir = context.sourceDir
-          command = arrayOf(
-            "meson", "setup", context.buildDir.absolutePath,
-            "--default-library=both",
-            "--cross-file", crossfile.absolutePath,
-            *arguments.get(),
-          )
-        }
-        execExpectingSuccess {
-          env.applyFrom(environement)
-          workingDir = context.buildDir
-          command = arrayOf("meson", "compile", "--clean")
-        }
-        execExpectingSuccess {
-          env.applyFrom(environement)
-          workingDir = context.buildDir
-          command = arrayOf("meson", "compile", "--verbose")
-        }
-        execExpectingSuccess {
-          env.applyFrom(environement)
-          workingDir = context.buildDir
-          command = arrayOf("meson", "install")
-        }
-      }
-      else -> {
-        if (autogen.exists()) {
-          logger.info("Running autogen for component [$dependency]")
+      when {
+        meson.exists() -> {
+          logger.info("Building component [$dependency] with meson")
           execExpectingSuccess {
             env.applyFrom(environement)
-            env["NOCONFIGURE"] = "1"
             workingDir = context.sourceDir
-            command = arrayOf(autogen.absolutePath)
+            command = arrayOf(
+              "meson", "setup", context.buildDir.absolutePath,
+              "--default-library=both",
+              "--cross-file", crossfile.absolutePath,
+              *arguments.get(),
+            )
+          }
+          execExpectingSuccess {
+            env.applyFrom(environement)
+            workingDir = context.buildDir
+            command = arrayOf("meson", "compile", "--clean")
+          }
+          execExpectingSuccess {
+            env.applyFrom(environement)
+            workingDir = context.buildDir
+            command = arrayOf("meson", "compile", "--verbose")
+          }
+          execExpectingSuccess {
+            env.applyFrom(environement)
+            workingDir = context.buildDir
+            command = arrayOf("meson", "install")
           }
         }
-        when {
-          cMakeLists.exists() -> {
-            logger.info("Runing cmake for component [$dependency]")
+        else -> {
+          if (autogen.exists()) {
+            logger.info("Running autogen for component [$dependency]")
             execExpectingSuccess {
               env.applyFrom(environement)
-              workingDir = context.buildDir
-              command = arrayOf(
-                "cmake", context.sourceDir.absolutePath,
-                "-DCMAKE_VERBOSE_MAKEFILE=0",
-                "-DCMAKE_BUILD_TYPE=Release",
-                "-DCMAKE_OSX_SYSROOT=${buildTarget.get().platform.sdk.lowercase()}",
-                "-DCMAKE_OSX_ARCHITECTURES=${buildTarget.get().arch.name}",
-                "-DCMAKE_SYSTEM_NAME=${buildTarget.get().platform.cmakeSystemName}",
-                "-DCMAKE_SYSTEM_PROCESSOR=${buildTarget.get().arch.name}",
-                "-DCMAKE_INSTALL_PREFIX=${context.prefixDir.absolutePath}",
-                "-DBUILD_SHARED_LIBS=ON",
-                "-DCMAKE_POLICY_VERSION_MINIMUM=3.5",
-                *arguments.get(),
-              )
+              env["NOCONFIGURE"] = "1"
+              workingDir = context.sourceDir
+              command = arrayOf(autogen.absolutePath)
             }
           }
-          else -> {
-            if (!configure.exists() && bootstrap.exists()) {
-              logger.info("Runing bootstrap for component [$dependency]")
+          when {
+            cMakeLists.exists() -> {
+              logger.info("Runing cmake for component [$dependency]")
               execExpectingSuccess {
                 env.applyFrom(environement)
-                workingDir = context.sourceDir
-                command = arrayOf(bootstrap.absolutePath)
+                workingDir = context.buildDir
+                command = arrayOf(
+                  "cmake", context.sourceDir.absolutePath,
+                  "-DCMAKE_VERBOSE_MAKEFILE=0",
+                  "-DCMAKE_BUILD_TYPE=Release",
+                  "-DCMAKE_OSX_SYSROOT=${buildTarget.get().platform.sdk.lowercase()}",
+                  "-DCMAKE_OSX_ARCHITECTURES=${buildTarget.get().arch.name}",
+                  "-DCMAKE_SYSTEM_NAME=${buildTarget.get().platform.cmakeSystemName}",
+                  "-DCMAKE_SYSTEM_PROCESSOR=${buildTarget.get().arch.name}",
+                  "-DCMAKE_INSTALL_PREFIX=${context.prefixDir.absolutePath}",
+                  "-DBUILD_SHARED_LIBS=ON",
+                  "-DCMAKE_POLICY_VERSION_MINIMUM=3.5",
+                  *arguments.get(),
+                )
               }
             }
-            if (!configure.exists()) {
-              throw GradleException("No build system found for dependency: ${dependency}")
-            }
-            logger.info("Runing configure for component [$dependency]")
-            execExpectingSuccess {
-              env.applyFrom(environement)
-              workingDir = context.buildDir
-              command = arrayOf(
-                configure.absolutePath,
-                "--prefix=${context.prefixDir.absolutePath}",
-                *arguments.get(),
-              )
+            else -> {
+              if (!configure.exists() && bootstrap.exists()) {
+                logger.info("Runing bootstrap for component [$dependency]")
+                execExpectingSuccess {
+                  env.applyFrom(environement)
+                  workingDir = context.sourceDir
+                  command = arrayOf(bootstrap.absolutePath)
+                }
+              }
+              if (!configure.exists()) {
+                throw GradleException("No build system found for dependency: ${dependency}")
+              }
+              logger.info("Runing configure for component [$dependency]")
+              execExpectingSuccess {
+                env.applyFrom(environement)
+                workingDir = context.buildDir
+                command = arrayOf(
+                  configure.absolutePath,
+                  "--prefix=${context.prefixDir.absolutePath}",
+                  *arguments.get(),
+                )
+              }
             }
           }
-        }
-        logger.info("Runing make for component [$dependency]")
-        execExpectingSuccess {
-          env.applyFrom(environement)
-          workingDir = context.buildDir
-          command = arrayOf("make", "-j$parallelism")
-        }
-        execExpectingSuccess {
-          env.applyFrom(environement)
-          workingDir = context.buildDir
-          command = arrayOf("make", "-j$parallelism", "install")
+          logger.info("Runing make for component [$dependency]")
+          execExpectingSuccess {
+            env.applyFrom(environement)
+            workingDir = context.buildDir
+            command = arrayOf("make", "-j$parallelism")
+          }
+          execExpectingSuccess {
+            env.applyFrom(environement)
+            workingDir = context.buildDir
+            command = arrayOf("make", "-j$parallelism", "install")
+          }
         }
       }
+
+    } catch (error: Throwable) {
+     context.buildDir.deleteRecursively()
+     context.prefixDir.deleteRecursively()
     }
   }
 

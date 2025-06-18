@@ -22,3 +22,5 @@ include("vulkan")
 include("spirvcross")
 include("shaderc")
 include("littlecms2")
+
+include("test-jvm")
