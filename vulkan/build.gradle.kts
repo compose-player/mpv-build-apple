@@ -2,6 +2,7 @@ import fr.composeplayer.builds.apple.misc.BuildTarget
 import fr.composeplayer.builds.apple.misc.Dependency
 import fr.composeplayer.builds.apple.misc.Platform
 import fr.composeplayer.builds.apple.misc.buildTag
+import fr.composeplayer.builds.apple.tasks.CreateXcFramework.FrameworkType
 import fr.composeplayer.builds.apple.tasks.buildContext
 import fr.composeplayer.builds.apple.utils.*
 
@@ -109,6 +110,25 @@ registerBasicWorkflow(
           dir.copyRecursively(target = destination, overwrite = true)
         }
       }
+    }
+  },
+  createXcframework = {
+    doLast {
+      val dir = project.rootDir.resolve("vendor/${Dependency.moltenvk}/Package/Release/MoltenVK")
+      val static = dir.resolve("static/MoltenVK.xcframework")
+      val shared = dir.resolve("dynamic/MoltenVK.xcframework")
+
+      val staticDestination = rootDir.resolve("xcframeworks/${FrameworkType.static}/MoltenVK.xcframework")
+        .apply(File::deleteRecursively)
+        .apply(File::mkdirs)
+
+      val sharedDestination = rootDir.resolve("xcframeworks/${FrameworkType.shared}/MoltenVK.xcframework")
+        .apply(File::deleteRecursively)
+        .apply(File::mkdirs)
+
+      static.copyRecursively(staticDestination, true)
+      shared.copyRecursively(sharedDestination, true)
+
     }
   }
 )

@@ -6,6 +6,7 @@ import org.gradle.api.GradleException
 import org.gradle.api.Project
 import org.gradle.api.Task
 import org.gradle.kotlin.dsl.getValue
+import org.gradle.kotlin.dsl.getting
 import org.gradle.process.ExecOperations
 import org.gradle.process.ExecSpec
 import java.io.File
@@ -224,6 +225,29 @@ fun Project.registerBasicWorkflow(
 
   val createXcframeworkTask by tasks.register("createXcframework[both]") {
     this.group = group
+  }
+
+  val clean by tasks.getting {
+    doLast {
+      rootDir.resolve("binaries/${dependency}").deleteRecursively()
+      rootDir.resolve("builds/${dependency}").deleteRecursively()
+
+      for (framework in dependency.frameworks) {
+        val platforms = buildList {
+          addAll( rootDir.resolve("fat-frameworks/static").listFiles() )
+          addAll( rootDir.resolve("fat-frameworks/shared").listFiles() )
+        }
+        for (dir in platforms) {
+          for (frameworkDir in dir.listFiles()) {
+            if (frameworkDir.name == "${framework.frameworkName}.framework") dir.deleteRecursively()
+          }
+        }
+        for ( type in listOf("static", "shared") ) {
+          val xcframework = rootDir.resolve("xcframeworks/$type/${framework.frameworkName}.xcframework")
+          if (xcframework.exists) xcframework.deleteRecursively()
+        }
+      }
+    }
   }
 
   val cloneTask by tasks.register(

@@ -55,5 +55,5 @@ registerBasicWorkflow(
       "-DSPIRV_TOOLS_BUILD_STATIC=ON",
       "-DBUILD_SHARED_LIBS=ON",
     )
-  }
+  },
 )

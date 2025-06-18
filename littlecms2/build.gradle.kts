@@ -12,7 +12,7 @@ repositories { mavenCentral() }
 kotlin { jvmToolchain(23) }
 
 registerBasicWorkflow(
-  dependency = Dependency.lcms,
+  dependency = Dependency.lcms2,
   targets = DEFAULT_TARGETS,
   build = { arguments = arrayOf() }
 )

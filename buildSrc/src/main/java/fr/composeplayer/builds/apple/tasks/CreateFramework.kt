@@ -1,76 +1,90 @@
 package fr.composeplayer.builds.apple.tasks
 
 import fr.composeplayer.builds.apple.misc.Architecture
+import fr.composeplayer.builds.apple.misc.BuildTarget
 import fr.composeplayer.builds.apple.misc.Dependency
 import fr.composeplayer.builds.apple.misc.Platform
+import fr.composeplayer.builds.apple.misc.frameworks
 import fr.composeplayer.builds.apple.misc.sdk
 import fr.composeplayer.builds.apple.utils.BUILD_VERSION
+import fr.composeplayer.builds.apple.utils.execExpectingSuccess
+import fr.composeplayer.builds.apple.utils.exists
 import fr.composeplayer.builds.apple.utils.minVersion
 import org.gradle.api.DefaultTask
+import org.gradle.api.provider.Property
 import org.gradle.api.tasks.Input
+import org.gradle.api.tasks.Optional
 import org.gradle.api.tasks.TaskAction
+import java.io.File
 
-
-open class CreateFramework : DefaultTask() {
+abstract class CreateFramework : DefaultTask() {
 
   enum class FrameworkType { static, shared }
 
-  @Input lateinit var dependency: Dependency
-  @Input lateinit var platform: Platform
-  @Input lateinit var architectures: List<Architecture>
-  @Input lateinit var type: FrameworkType
+  @Input
+  lateinit var dependency: Dependency
+
+  @Input
+  lateinit var platform: Platform
+
+  @Input
+  lateinit var architectures: List<Architecture>
+
+  @Input
+  lateinit var type: FrameworkType
+
+  @get:Optional
+  @get:Input
+  abstract val skip: Property<Boolean>
 
   @TaskAction
   fun execute() {
-    return
-    /*for (framework in dependency.frameworks) {
-      logger.lifecycle("Creating framework [$framework] from component [$dependency]")
-      val installDir = project.rootDir.resolve("fat-frameworks/$type/$platform/$framework.framework")
+    if (skip.isPresent && skip.get()) return
+    for (framework in dependency.frameworks) {
+      val installDir = project.rootDir.resolve("fat-frameworks/$type/$platform/${framework.frameworkName}.framework")
       if (installDir.exists) {
         installDir.deleteRecursively()
         logger.lifecycle("Framework [$framework] already exists, deleting old files")
       }
-
+      installDir.mkdirs()
       val command = mutableListOf("lipo", "-create")
-
       for (arch in architectures) {
         val target = BuildTarget(platform, arch)
         val context = buildContext(dependency, target)
-        val headers = context.prefixDir.resolve("include")
+        val include = context.prefixDir.resolve("include")
+        val destination = installDir.resolve("Headers").apply(File::mkdir)
+        include.copyRecursively(
+          target = destination,
+          overwrite = true,
+        )
+        val binaryExtension = if (type == FrameworkType.static) "a" else "dylib"
+        val binaryFile = context.prefixDir
+          .resolve("lib")
           .listFiles()
-          .filter { it.name.contains(framework, true) }
-        for (header in headers) {
-          val target = installDir.resolve("Headers").apply(File::mkdirs)
-          when {
-            header.isDirectory -> header.copyRecursively(target = target, overwrite = true)
-            else -> header.copyTo(target = target.resolve(header.name), overwrite = true)
+          .first {
+            it.name.equals("lib${framework.frameworkName}.$binaryExtension", true)
+                    || it.name.equals("${framework.frameworkName}.$binaryExtension", true)
+                    || it.name.equals("${framework.frameworkName}_shared.$binaryExtension", true)
+                    || it.name.equals("lib${framework.frameworkName}_shared.$binaryExtension", true)
           }
-        }
-
-        val extension = if (type == FrameworkType.static) "a" else "dylib"
-        val binary = context.prefixDir.resolve("lib/lib${framework.lowercase()}.$extension")
-        if (binary.exists) command += binary.absolutePath
-
+        command += binaryFile.absolutePath
       }
+      command += listOf("-output", installDir.resolve(framework.frameworkName).absolutePath)
 
-      command += listOf("-output", installDir.resolve(framework).absolutePath)
-
-      execExpectingSuccess {
-        this.command = command.toTypedArray()
-      }
+      execExpectingSuccess { this.command = command.toTypedArray() }
 
       val modulemap = modulemap(
-        frameworkName = framework,
-        excludeHeaders = dependency.frameworkExcludeHeaders(framework),
+        frameworkName = framework.frameworkName,
+        excludeHeaders = framework.excludeHeaders,
       )
       installDir.resolve("Modules/module.modulemap")
         .apply {
           if (!parentFile.exists) parentFile.mkdirs()
           writeText(modulemap)
         }
-      val plist = plist(framework, platform)
+      val plist = plist(framework.frameworkName, platform)
       installDir.resolve("Info.plist").writeText(plist)
-    }*/
+    }
   }
 
 }
