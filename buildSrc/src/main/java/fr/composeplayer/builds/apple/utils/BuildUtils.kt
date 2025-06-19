@@ -14,7 +14,7 @@ import java.io.File
 import kotlin.concurrent.thread
 import kotlin.text.get
 
-val BUILD_VERSION = "1.0.0"
+const val BUILD_VERSION = "1.0.0"
 
 class ExecScope(
   private val execSpec: ExecSpec,
@@ -49,9 +49,7 @@ interface CommandScope {
 }
 
 
-private class ProcessBuilderScope(
-  private val builder: ProcessBuilder,
-) : CommandScope {
+private class ProcessBuilderScope(private val builder: ProcessBuilder) : CommandScope {
 
   override var workingDir: File?
     get() = builder.directory()
@@ -85,12 +83,14 @@ fun Task.execExpectingSuccess(
   logger.lifecycle("\uD83D\uDEE0\uFE0F Executing command:")
   logger.lifecycle(builder.command().joinToString(" "))
   val process = builder.start()
-  val thread = thread { process.inputStream.copyTo(System.out) }
-  val thread2 = thread { process.errorStream.copyTo(System.err) }
+  val result = process.inputStream.bufferedReader().readText()
+  val error = process.errorStream.bufferedReader().readText()
+  logger.info(result)
   val resultCode = process.waitFor()
-  thread.join()
-  thread2.join()
-  if (resultCode != 0) throw GradleException("Command failed with result code [$resultCode]")
+  if (resultCode != 0) {
+    logger.error(error)
+    throw GradleException("Command failed with result code [$resultCode]")
+  }
 }
 
 fun Task.execExpectingResult(
@@ -100,16 +100,15 @@ fun Task.execExpectingResult(
   ProcessBuilderScope(builder).apply(block)
   logger.lifecycle("\uD83D\uDEE0\uFE0F Executing command:")
   logger.lifecycle(builder.command().joinToString(" "))
-  val process = builder.start().apply {
-    errorStream.copyTo(System.err)
-  }
+  val process = builder.start()
   val result = process.inputStream.bufferedReader().readText()
+  val error = process.errorStream.bufferedReader().readText()
   val resultCode = process.waitFor()
   if (resultCode != 0) {
+    logger.error(error)
     throw GradleException("Command failed with result code [$resultCode]")
   }
   return result
-
 }
 
 val parallelism: Int get() = 8

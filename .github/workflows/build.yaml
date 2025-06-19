@@ -1,0 +1,97 @@
+name: Build only
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    permissions:
+      contents: write
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install dependencies
+        run: |
+          brew install autoconf
+          brew install automake
+          brew install libtool
+          python -m pip install meson==1.4.2
+          brew install ninja
+          brew install rename
+
+      - name: Setup Java JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: oracle
+          java-version: 23
+          cache: gradle
+
+      - name: Install Rust (nightly)
+        run: |
+          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+          ~/.cargo/bin/rustup install nightly
+          ~/.cargo/bin/rustup component add rust-src --toolchain nightly
+
+      - name: Add Cargo to PATH
+        run: echo "${HOME}/.cargo/bin" >> $GITHUB_PATH
+
+      - name: Install cargo-c
+        run: ~/.cargo/bin/cargo install cargo-c
+
+      - name: Setup Xcode
+        run: |
+          sudo xcode-select -s /Applications/Xcode_15.4.app/Contents/Developer
+          xcodebuild -showsdks
+
+      - name: Prepare gradle
+        run: chmod +x ./gradlew
+
+      - name: Dovi
+        run: ./gradlew assemble[dovi] --stacktrace
+
+      - name: Uchardet
+        run: ./gradlew assemble[uchardet] --stacktrace
+
+      - name: Unibreak
+        run: ./gradlew assemble[unibreak] --stacktrace
+
+      - name: Harfbuzz
+        run: ./gradlew assemble[harfbuzz] --stacktrace
+
+      - name: Fribidi
+        run: ./gradlew assemble[fribidi] --stacktrace
+
+      - name: Freetype
+        run: ./gradlew assemble[freetype] --stacktrace
+
+      - name: Ass
+        run: ./gradlew assemble[ass] --stacktrace
+
+      - name: Dav1d
+        run: ./gradlew assemble[dav1d] --stacktrace
+
+      - name: Shaderc
+        run: ./gradlew assemble[shaderc] --stacktrace
+
+      - name: Spirvcross
+        run: ./gradlew assemble[spirvcross] --stacktrace
+
+      - name: Vulkan
+        run: ./gradlew assemble[vulkan] --stacktrace
+
+      - name: Placebo
+        run: ./gradlew assemble[placebo] --stacktrace
+
+      - name: Mbedtls
+        run: ./gradlew assemble[mbedtls] --stacktrace
+
+      - name: FFmpeg
+        run: ./gradlew assemble[ffmpeg] --stacktrace
+
+      - name: Mpv
+        run: ./gradlew assemble[mpv] --stacktrace
+
+      - name: Test binaries load & interop on jvm
+        run: ./gradlew test-jvm:test

@@ -1,0 +1,120 @@
+name: Build and release
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    permissions:
+      contents: write
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install dependencies
+        run: |
+          brew install autoconf
+          brew install automake
+          brew install libtool
+          python -m pip install meson==1.4.2
+          brew install ninja
+
+      - name: Setup Java JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: oracle
+          java-version: 23
+          cache: gradle
+
+      - name: Install Rust (nightly)
+        run: |
+          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+          echo "${HOME}/.cargo/bin" >> $GITHUB_PATH
+          source "${HOME}/.cargo/env"
+          rustup install nightly
+          rustup component add rust-src --toolchain nightly
+
+      - name: Setup Xcode
+        run: |
+          sudo xcode-select -s /Applications/Xcode_15.4.app/Contents/Developer
+          xcodebuild -showsdks
+
+      - name: Prepare gradle
+        run: chmod +x ./gradlew
+
+      - name: Uchardet
+        run: ./gradlew assemble[uchardet]
+
+      - name: Unibreak
+        run: ./gradlew assemble[unibreak]
+
+      - name: Harfbuzz
+        run: ./gradlew assemble[harfbuzz]
+
+      - name: Fribidi
+        run: ./gradlew assemble[fribidi]
+
+      - name: Freetype
+        run: ./gradlew assemble[freetype]
+
+      - name: Ass
+        run: ./gradlew assemble[ass]
+
+      - name: Dav1d
+        run: ./gradlew assemble[dav1d]
+
+      - name: Dovi
+        run: ./gradlew assemble[dovi]
+
+      - name: Shaderc
+        run: ./gradlew assemble[shaderc]
+
+      - name: Spirvcross
+        run: ./gradlew assemble[spirvcross]
+
+      - name: Vulkan
+        run: ./gradlew assemble[vulkan]
+
+      - name: Placebo
+        run: ./gradlew assemble[placebo]
+
+      - name: Mbedtls
+        run: ./gradlew assemble[mbedtls]
+
+      - name: FFmpeg
+        run: ./gradlew assemble[ffmpeg]
+
+      - name: Mpv
+        run: ./gradlew assemble[mpv]
+
+      - name: Test binaries load & interop on jvm
+        run: ./gradlew test-jvm:test
+
+      - name: Extract version from Gradle
+        id: get_version
+        run: |
+          VERSION=$(./gradlew -q printVersion)
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Zip xcframeworks
+        run: |
+          mkdir -p zips
+          for dir in xcframework/static/*.xcframework; do
+            base=$(basename "$dir" .xcframework)
+            zip -r "zips/${base}-static.zip" "$dir"
+          done
+          for dir in xcframework/shared/*.xcframework; do
+            base=$(basename "$dir" .xcframework)
+            zip -r "zips/${base}-dynamic.zip" "$dir"
+          done
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: zips/*.zip
+          tag_name: ${{ steps.get_version.outputs.version }}
+          name: ${{ github.ref_name }}
+          body: |
+            - Built automatically via GitHub Actions
+          draft: true
+          prerelease: false
+          generate_release_notes: true

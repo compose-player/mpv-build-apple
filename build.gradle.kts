@@ -1,3 +1,4 @@
+import fr.composeplayer.builds.apple.utils.BUILD_VERSION
 import fr.composeplayer.builds.apple.utils.execExpectingResult
 
 plugins {
@@ -6,6 +7,12 @@ plugins {
 }
 
 afterEvaluate {
+
+  this.version = BUILD_VERSION
+
+  val printVersion by tasks.registering {
+    doLast { print(BUILD_VERSION) }
+  }
 
   val clean by tasks.registering {
     group = "build"
