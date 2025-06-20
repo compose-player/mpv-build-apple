@@ -1,4 +1,5 @@
 import fr.composeplayer.builds.apple.misc.Dependency
+import fr.composeplayer.builds.apple.utils.BUILD_VERSION
 import fr.composeplayer.builds.apple.utils.DEFAULT_TARGETS
 import fr.composeplayer.builds.apple.utils.registerBasicWorkflow
 
@@ -6,7 +7,7 @@ plugins {
   kotlin("jvm")
 }
 group = "fr.composeplayer.builds.mpv"
-version = libs.versions.library
+version = BUILD_VERSION
 
 repositories { mavenCentral() }
 kotlin { jvmToolchain(23) }
