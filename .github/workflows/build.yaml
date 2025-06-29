@@ -48,50 +48,26 @@ jobs:
       - name: Prepare gradle
         run: chmod +x ./gradlew
 
-      - name: Dovi
-        run: ./gradlew assemble[dovi] --stacktrace
+      - name: shaderc spirvcross vulkan
+        run: ./gradlew assemble[shaderc] assemble[spirvcross] assemble[vulkan] --parallel --info --stacktrace
 
-      - name: Uchardet
-        run: ./gradlew assemble[uchardet] --stacktrace
+      - name: dovi lcms2 dav1d
+        run: ./gradlew assemble[dovi] assemble[littlecms2] assemble[dav1d] --info --stacktrace
 
-      - name: Unibreak
-        run: ./gradlew assemble[unibreak] --stacktrace
+      - name: placebo
+        run: ./gradlew assemble[placebo] --info --stacktrace
 
-      - name: Harfbuzz
-        run: ./gradlew assemble[harfbuzz] --stacktrace
+      - name: uchardet unibreak fribidi freetype harfbuzz
+        run: ./gradlew assemble[uchardet] assemble[unibreak] assemble[fribidi] assemble[freetype] assemble[harfbuzz] --parallel --info --stacktrace
 
-      - name: Fribidi
-        run: ./gradlew assemble[fribidi] --stacktrace
+      - name: ass mbedtls
+        run: ./gradlew assemble[ass] assemble[mbedtls] --parallel --info --stacktrace
 
-      - name: Freetype
-        run: ./gradlew assemble[freetype] --stacktrace
+      - name: ffmpeg
+        run: ./gradlew assemble[ffmpeg] --info --stacktrace
 
-      - name: Ass
-        run: ./gradlew assemble[ass] --stacktrace
-
-      - name: Dav1d
-        run: ./gradlew assemble[dav1d] --stacktrace
-
-      - name: Shaderc
-        run: ./gradlew assemble[shaderc] --stacktrace
-
-      - name: Spirvcross
-        run: ./gradlew assemble[spirvcross] --stacktrace
-
-      - name: Vulkan
-        run: ./gradlew assemble[vulkan] --stacktrace
-
-      - name: Placebo
-        run: ./gradlew assemble[placebo] --stacktrace
-
-      - name: Mbedtls
-        run: ./gradlew assemble[mbedtls] --stacktrace
-
-      - name: FFmpeg
-        run: ./gradlew assemble[ffmpeg] --stacktrace
-
-      - name: Mpv
-        run: ./gradlew assemble[mpv] --stacktrace
+      - name: mpv
+        run: ./gradlew assemble[mpv] --info --stacktrace
 
       - name: Test binaries load & interop on jvm
         run: ./gradlew test-jvm:test
