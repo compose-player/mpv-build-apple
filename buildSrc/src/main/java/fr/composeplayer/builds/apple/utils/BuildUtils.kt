@@ -111,7 +111,7 @@ fun Task.execExpectingResult(
   return result
 }
 
-val parallelism: Int get() = 4
+val parallelism: Int get() = 2
 
 fun Platform.locationOf(toolName: String): String {
   return when (toolName) {
