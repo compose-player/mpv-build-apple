@@ -15,7 +15,7 @@ jobs:
           brew install autoconf
           brew install automake
           brew install libtool
-          python -m pip install meson==1.4.2
+          python3 -m pip install --break-system-packages meson==1.4.2
           brew install ninja
 
       - name: Setup Java JDK

@@ -9,24 +9,20 @@ jobs:
   build:
     permissions:
       contents: write
-    runs-on: macos-14
+    runs-on: self-hosted
     steps:
       - uses: actions/checkout@v4
+
       - name: Install dependencies
         run: |
+          brew install cmake
+          brew install pkgconf
           brew install autoconf
           brew install automake
           brew install libtool
-          python -m pip install meson==1.4.2
+          python3 -m pip install --break-system-packages meson==1.4.2
           brew install ninja
           brew install rename
-
-      - name: Setup Java JDK
-        uses: actions/setup-java@v4
-        with:
-          distribution: oracle
-          java-version: 23
-          cache: gradle
 
       - name: Install Rust (nightly)
         run: |
@@ -40,28 +36,50 @@ jobs:
       - name: Install cargo-c
         run: cargo install cargo-c
 
-      - name: Setup Xcode
-        run: |
-          sudo xcode-select -s /Applications/Xcode_15.4.app/Contents/Developer
-          xcodebuild -showsdks
-
       - name: Prepare gradle
         run: chmod +x ./gradlew
 
-      - name: shaderc spirvcross vulkan
-        run: ./gradlew assemble[shaderc] assemble[spirvcross] assemble[vulkan] --parallel --info --stacktrace
+      - name: shaderc
+        run: ./gradlew assemble[shaderc] --info --stacktrace
 
-      - name: dovi lcms2 dav1d
-        run: ./gradlew assemble[dovi] assemble[littlecms2] assemble[dav1d] --info --stacktrace
+      - name: spirvcross
+        run: ./gradlew assemble[spirvcross] --info --stacktrace
+
+      - name: vulkan
+        run: ./gradlew assemble[vulkan] --info --stacktrace
+
+      - name: dovi
+        run: ./gradlew assemble[dovi] --info --stacktrace
+
+      - name: lcms2
+        run: ./gradlew assemble[littlecms2]--info --stacktrace
+
+      - name: dav1d
+        run: ./gradlew assemble[dav1d] --info --stacktrace
 
       - name: placebo
         run: ./gradlew assemble[placebo] --info --stacktrace
 
-      - name: uchardet unibreak fribidi freetype harfbuzz
-        run: ./gradlew assemble[uchardet] assemble[unibreak] assemble[fribidi] assemble[freetype] assemble[harfbuzz] --parallel --info --stacktrace
+      - name: uchardet
+        run: ./gradlew assemble[uchardet] --info --stacktrace
 
-      - name: ass mbedtls
-        run: ./gradlew assemble[ass] assemble[mbedtls] --parallel --info --stacktrace
+      - name: unibreak
+        run: ./gradlew assemble[unibreak] --info --stacktrace
+
+      - name: fribidi
+        run: ./gradlew assemble[fribidi] --info --stacktrace
+
+      - name: freetype
+        run: ./gradlew assemble[freetype] --info --stacktrace
+
+      - name: harfbuzz
+        run: ./gradlew assemble[harfbuzz] --info --stacktrace
+
+      - name: mbedtls
+        run: ./gradlew assemble[mbedtls] --info --stacktrace
+
+      - name: ass
+        run: ./gradlew assemble[ass] --info --stacktrace
 
       - name: ffmpeg
         run: ./gradlew assemble[ffmpeg] --info --stacktrace
