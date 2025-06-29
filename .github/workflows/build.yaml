@@ -9,15 +9,19 @@ jobs:
   build:
     permissions:
       contents: write
-    runs-on: macos-14
+    runs-on: self-hosted
     steps:
       - uses: actions/checkout@v4
+
+      - name: Set up Homebrew
+        uses: Homebrew/actions/setup-homebrew@main
+
       - name: Install dependencies
         run: |
           brew install autoconf
           brew install automake
           brew install libtool
-          python -m pip install meson==1.4.2
+          python3 -m pip install --break-system-packages meson==1.4.2
           brew install ninja
           brew install rename
 
