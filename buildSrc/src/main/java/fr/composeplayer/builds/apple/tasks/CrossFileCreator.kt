@@ -23,7 +23,7 @@ class CrossFileCreator(
     )
 
   fun create(): File {
-    val file = File(context.project.rootDir, "cross-files/${context.buildTarget.platform.name}-${context.buildTarget.arch.name}.pc")
+    val file = File(context.project.rootDir, "cross-files/${context.dependency}/${context.buildTarget.platform.name}-${context.buildTarget.arch.name}.pc")
     file.parentFile.mkdirs()
     val content = """
       [binaries]

@@ -1,0 +1,77 @@
+name: Build only
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    permissions:
+      contents: write
+    runs-on: self-hosted
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Homebrew
+        uses: Homebrew/actions/setup-homebrew@main
+
+      - name: Install dependencies
+        run: |
+          brew install autoconf
+          brew install automake
+          brew install libtool
+          python3 -m pip install --break-system-packages meson==1.4.2
+          brew install ninja
+          brew install rename
+
+      - name: Setup Java JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: oracle
+          java-version: 23
+          cache: gradle
+
+      - name: Install Rust (nightly)
+        run: |
+          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+          ~/.cargo/bin/rustup install nightly
+          ~/.cargo/bin/rustup component add rust-src --toolchain nightly
+
+      - name: Add Cargo to PATH
+        run: echo "${HOME}/.cargo/bin" >> $GITHUB_PATH
+
+      - name: Install cargo-c
+        run: cargo install cargo-c
+
+      - name: Setup Xcode
+        run: |
+          sudo xcode-select -s /Applications/Xcode_15.4.app/Contents/Developer
+          xcodebuild -showsdks
+
+      - name: Prepare gradle
+        run: chmod +x ./gradlew
+
+      - name: shaderc spirvcross vulkan
+        run: ./gradlew assemble[shaderc] assemble[spirvcross] assemble[vulkan] --parallel --info --stacktrace
+
+      - name: dovi lcms2 dav1d
+        run: ./gradlew assemble[dovi] assemble[littlecms2] assemble[dav1d] --info --stacktrace
+
+      - name: placebo
+        run: ./gradlew assemble[placebo] --info --stacktrace
+
+      - name: uchardet unibreak fribidi freetype harfbuzz
+        run: ./gradlew assemble[uchardet] assemble[unibreak] assemble[fribidi] assemble[freetype] assemble[harfbuzz] --parallel --info --stacktrace
+
+      - name: ass mbedtls
+        run: ./gradlew assemble[ass] assemble[mbedtls] --parallel --info --stacktrace
+
+      - name: ffmpeg
+        run: ./gradlew assemble[ffmpeg] --info --stacktrace
+
+      - name: mpv
+        run: ./gradlew assemble[mpv] --info --stacktrace
+
+      - name: Test binaries load & interop on jvm
+        run: ./gradlew test-jvm:test
