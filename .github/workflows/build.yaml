@@ -20,21 +20,8 @@ jobs:
           brew install autoconf
           brew install automake
           brew install libtool
-          python3 -m pip install --break-system-packages meson==1.4.2
           brew install ninja
           brew install rename
-
-      - name: Install Rust (nightly)
-        run: |
-          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
-          ~/.cargo/bin/rustup install nightly
-          ~/.cargo/bin/rustup component add rust-src --toolchain nightly
-
-      - name: Add Cargo to PATH
-        run: echo "${HOME}/.cargo/bin" >> $GITHUB_PATH
-
-      - name: Install cargo-c
-        run: cargo install cargo-c
 
       - name: Prepare gradle
         run: chmod +x ./gradlew
