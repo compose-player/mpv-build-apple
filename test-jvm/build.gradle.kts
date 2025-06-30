@@ -1,6 +1,8 @@
 import fr.composeplayer.builds.apple.utils.execExpectingResult
 import fr.composeplayer.builds.apple.utils.execExpectingSuccess
 import fr.composeplayer.builds.apple.utils.exists
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile
 
 plugins {
   kotlin("jvm") version "2.1.20"
@@ -23,12 +25,23 @@ tasks.test {
 }
 kotlin {
   jvmToolchain(23)
+
 }
 
 application {
   mainClass = "fr.composeplayer.builds.mpv.Main"
 }
 
+
+tasks.withType<KotlinJvmCompile> {
+  compilerOptions {
+    jvmTarget = JvmTarget.JVM_23
+  }
+}
+
+tasks.test {
+  outputs.upToDateWhen { false }
+}
 
 val copyLibs by tasks.registering {
   group = "application"

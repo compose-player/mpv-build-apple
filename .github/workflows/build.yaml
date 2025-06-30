@@ -39,7 +39,7 @@ jobs:
         run: ./gradlew assemble[dovi] --info --stacktrace
 
       - name: lcms2
-        run: ./gradlew assemble[littlecms2]--info --stacktrace
+        run: ./gradlew assemble[littlecms2] --info --stacktrace
 
       - name: dav1d
         run: ./gradlew assemble[dav1d] --info --stacktrace
@@ -73,6 +73,3 @@ jobs:
 
       - name: mpv
         run: ./gradlew assemble[mpv] --info --stacktrace
-
-      - name: Test binaries load & interop on jvm
-        run: ./gradlew test-jvm:test

@@ -11,6 +11,7 @@ import org.gradle.kotlin.dsl.support.uppercaseFirstChar
 import org.gradle.process.ExecOperations
 import org.gradle.process.ExecSpec
 import java.io.File
+import java.util.concurrent.Executors
 import kotlin.concurrent.thread
 import kotlin.text.get
 
@@ -83,12 +84,21 @@ fun Task.execExpectingSuccess(
   logger.lifecycle("\uD83D\uDEE0\uFE0F Executing command:")
   logger.lifecycle(builder.command().joinToString(" "))
   val process = builder.start()
-  val result = process.inputStream.bufferedReader().readText()
-  val error = process.errorStream.bufferedReader().readText()
-  logger.info(result)
-  val resultCode = process.waitFor()
+  val exec = Executors.newFixedThreadPool(2)
+
+  exec.submit {
+    process.errorStream
+      .bufferedReader()
+      .forEachLine { logger.error(it) }
+  }
+  exec.submit {
+    process.inputStream
+      .bufferedReader()
+      .forEachLine { logger.info(it) }
+  }
+
+  val resultCode = try { process.waitFor() } finally { exec.shutdownNow() }
   if (resultCode != 0) {
-    logger.error(error)
     throw GradleException("Command failed with result code [$resultCode]")
   }
 }

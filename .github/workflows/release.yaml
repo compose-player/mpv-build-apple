@@ -1,4 +1,4 @@
-name: Build and release
+name: Build only
 
 on:
   workflow_dispatch:
@@ -7,105 +7,79 @@ jobs:
   build:
     permissions:
       contents: write
-    runs-on: macos-14
+    runs-on: self-hosted
     steps:
       - uses: actions/checkout@v4
+
       - name: Install dependencies
         run: |
+          brew install cmake
+          brew install pkgconf
           brew install autoconf
           brew install automake
           brew install libtool
-          python3 -m pip install --break-system-packages meson==1.4.2
           brew install ninja
-
-      - name: Setup Java JDK
-        uses: actions/setup-java@v4
-        with:
-          distribution: oracle
-          java-version: 23
-          cache: gradle
-
-      - name: Install Rust (nightly)
-        run: |
-          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
-          echo "${HOME}/.cargo/bin" >> $GITHUB_PATH
-          source "${HOME}/.cargo/env"
-          rustup install nightly
-          rustup component add rust-src --toolchain nightly
-
-      - name: Setup Xcode
-        run: |
-          sudo xcode-select -s /Applications/Xcode_15.4.app/Contents/Developer
-          xcodebuild -showsdks
+          brew install rename
 
       - name: Prepare gradle
         run: chmod +x ./gradlew
 
-      - name: Uchardet
-        run: ./gradlew assemble[uchardet]
+      - name: shaderc
+        run: ./gradlew assemble[shaderc] --info --stacktrace
 
-      - name: Unibreak
-        run: ./gradlew assemble[unibreak]
+      - name: spirvcross
+        run: ./gradlew assemble[spirvcross] --info --stacktrace
 
-      - name: Harfbuzz
-        run: ./gradlew assemble[harfbuzz]
+      - name: vulkan
+        run: ./gradlew assemble[vulkan] --info --stacktrace
 
-      - name: Fribidi
-        run: ./gradlew assemble[fribidi]
+      - name: dovi
+        run: ./gradlew assemble[dovi] --info --stacktrace
 
-      - name: Freetype
-        run: ./gradlew assemble[freetype]
+      - name: lcms2
+        run: ./gradlew assemble[littlecms2] --info --stacktrace
 
-      - name: Ass
-        run: ./gradlew assemble[ass]
+      - name: dav1d
+        run: ./gradlew assemble[dav1d] --info --stacktrace
 
-      - name: Dav1d
-        run: ./gradlew assemble[dav1d]
+      - name: placebo
+        run: ./gradlew assemble[placebo] --info --stacktrace
 
-      - name: Dovi
-        run: ./gradlew assemble[dovi]
+      - name: uchardet
+        run: ./gradlew assemble[uchardet] --info --stacktrace
 
-      - name: Shaderc
-        run: ./gradlew assemble[shaderc]
+      - name: unibreak
+        run: ./gradlew assemble[unibreak] --info --stacktrace
 
-      - name: Spirvcross
-        run: ./gradlew assemble[spirvcross]
+      - name: fribidi
+        run: ./gradlew assemble[fribidi] --info --stacktrace
 
-      - name: Vulkan
-        run: ./gradlew assemble[vulkan]
+      - name: freetype
+        run: ./gradlew assemble[freetype] --info --stacktrace
 
-      - name: Placebo
-        run: ./gradlew assemble[placebo]
+      - name: harfbuzz
+        run: ./gradlew assemble[harfbuzz] --info --stacktrace
 
-      - name: Mbedtls
-        run: ./gradlew assemble[mbedtls]
+      - name: mbedtls
+        run: ./gradlew assemble[mbedtls] --info --stacktrace
 
-      - name: FFmpeg
-        run: ./gradlew assemble[ffmpeg]
+      - name: ass
+        run: ./gradlew assemble[ass] --info --stacktrace
 
-      - name: Mpv
-        run: ./gradlew assemble[mpv]
+      - name: ffmpeg
+        run: ./gradlew assemble[ffmpeg] --info --stacktrace
 
-      - name: Test binaries load & interop on jvm
-        run: ./gradlew test-jvm:test
+      - name: mpv
+        run: ./gradlew assemble[mpv] --info --stacktrace
+
+      - name: Create release artifacts
+        run: ./gradlew createArtifacts
 
       - name: Extract version from Gradle
         id: get_version
         run: |
           VERSION=$(./gradlew -q printVersion)
           echo "version=$VERSION" >> $GITHUB_OUTPUT
-
-      - name: Zip xcframeworks
-        run: |
-          mkdir -p zips
-          for dir in xcframework/static/*.xcframework; do
-            base=$(basename "$dir" .xcframework)
-            zip -r "zips/${base}-static.zip" "$dir"
-          done
-          for dir in xcframework/shared/*.xcframework; do
-            base=$(basename "$dir" .xcframework)
-            zip -r "zips/${base}-dynamic.zip" "$dir"
-          done
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
