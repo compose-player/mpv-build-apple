@@ -1,4 +1,4 @@
-name: Build only
+name: Build & release
 
 on:
   workflow_dispatch:
