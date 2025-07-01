@@ -15,7 +15,7 @@ class Main {
   companion object {
 
     @JvmStatic
-    fun main(args: Array<String>) {
+    fun getMpvVersion(): Long {
       val uri = this::class.java.getResource("/libs/")!!.toURI()
       val resources = try {
         Paths.get(uri)
@@ -39,11 +39,13 @@ class Main {
         lookup.find("mpv_client_api_version").orElseThrow(),
         FunctionDescriptor.of(ValueLayout.JAVA_LONG, ValueLayout.ADDRESS)
       )
-      val result = mpv_client_api_version.invokeExact(MemorySegment.NULL) as Long
-      when (result) {
-        131077L -> Unit
-        else -> throw IllegalStateException("Invalid result: [$result]")
-      }
+      return mpv_client_api_version.invokeExact(MemorySegment.NULL) as Long
+    }
+
+    @JvmStatic
+    fun main(args: Array<String>) {
+      val version = getMpvVersion()
+      print("Mpv loaded, version: $version")
     }
 
   }

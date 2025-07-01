@@ -166,12 +166,12 @@ abstract class AutoBuildTask : DefaultTask() {
           execExpectingSuccess {
             env.applyFrom(environement)
             workingDir = context.buildDir
-            command = arrayOf("make", "-j$parallelism")
+            command = arrayOf("make", "-j$parallelism", "V=1")
           }
           execExpectingSuccess {
             env.applyFrom(environement)
             workingDir = context.buildDir
-            command = arrayOf("make", "-j$parallelism", "install")
+            command = arrayOf("make", "-j$parallelism", "V=1", "install")
           }
         }
       }

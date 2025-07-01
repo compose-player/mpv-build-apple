@@ -11,7 +11,7 @@ plugins {
 }
 
 group = "fr.composeplayer.builds.mpv"
-version = libs.versions.library
+version = BUILD_VERSION
 
 repositories { mavenCentral() }
 kotlin { jvmToolchain(23) }
@@ -25,7 +25,7 @@ registerBasicWorkflow(
     enabled = !rootProject.rootDir.resolve("vendor/${Dependency.moltenvk}/External").exists()
     doLast {
       val sourceDir = File(rootProject.rootDir, "vendor/${Dependency.moltenvk}")
-      val deps = targets.map { "--${it.platform.buildTag}" }.toTypedArray()
+      val deps = targets.map { "--${it.platform.buildTag}" }.toSet().toTypedArray()
       execExpectingSuccess {
         workingDir = sourceDir
         command = arrayOf(
@@ -45,7 +45,7 @@ registerBasicWorkflow(
         command = arrayOf("make", "clean")
       }
       execExpectingSuccess {
-        val args = targets.map { it.platform.buildTag }.toTypedArray()
+        val args = targets.map { it.platform.buildTag }.toSet().toTypedArray()
         workingDir = sourceDir
         command = arrayOf("make", *args)
       }

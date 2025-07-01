@@ -1,0 +1,94 @@
+name: Build only
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    permissions:
+      contents: write
+    runs-on: self-hosted
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          brew install cmake
+          brew install pkgconf
+          brew install autoconf
+          brew install automake
+          brew install libtool
+          brew install ninja
+          brew install rename
+
+      - name: Prepare gradle
+        run: chmod +x ./gradlew
+
+      - name: shaderc
+        run: ./gradlew assemble[shaderc] --info --stacktrace
+
+      - name: spirvcross
+        run: ./gradlew assemble[spirvcross] --info --stacktrace
+
+      - name: vulkan
+        run: ./gradlew assemble[vulkan] --info --stacktrace
+
+      - name: dovi
+        run: ./gradlew assemble[dovi] --info --stacktrace
+
+      - name: lcms2
+        run: ./gradlew assemble[littlecms2] --info --stacktrace
+
+      - name: dav1d
+        run: ./gradlew assemble[dav1d] --info --stacktrace
+
+      - name: placebo
+        run: ./gradlew assemble[placebo] --info --stacktrace
+
+      - name: uchardet
+        run: ./gradlew assemble[uchardet] --info --stacktrace
+
+      - name: unibreak
+        run: ./gradlew assemble[unibreak] --info --stacktrace
+
+      - name: fribidi
+        run: ./gradlew assemble[fribidi] --info --stacktrace
+
+      - name: freetype
+        run: ./gradlew assemble[freetype] --info --stacktrace
+
+      - name: harfbuzz
+        run: ./gradlew assemble[harfbuzz] --info --stacktrace
+
+      - name: mbedtls
+        run: ./gradlew assemble[mbedtls] --info --stacktrace
+
+      - name: ass
+        run: ./gradlew assemble[ass] --info --stacktrace
+
+      - name: ffmpeg
+        run: ./gradlew assemble[ffmpeg] --info --stacktrace
+
+      - name: mpv
+        run: ./gradlew assemble[mpv] --info --stacktrace
+
+      - name: Create release artifacts
+        run: ./gradlew createArtifacts
+
+      - name: Extract version from Gradle
+        id: get_version
+        run: |
+          VERSION=$(./gradlew -q printVersion)
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: zips/*.zip
+          tag_name: ${{ steps.get_version.outputs.version }}
+          name: ${{ github.ref_name }}
+          body: |
+            - Built automatically via GitHub Actions
+          draft: true
+          prerelease: false
+          generate_release_notes: true

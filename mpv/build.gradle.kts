@@ -9,7 +9,7 @@ plugins {
 }
 
 group = "fr.composeplayer.builds.mpv"
-version = libs.versions.library
+version = BUILD_VERSION
 
 repositories { mavenCentral() }
 kotlin { jvmToolchain(23) }

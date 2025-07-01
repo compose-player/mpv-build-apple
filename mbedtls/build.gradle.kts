@@ -3,6 +3,7 @@ import fr.composeplayer.builds.apple.misc.frameworks
 import fr.composeplayer.builds.apple.misc.versionName
 import fr.composeplayer.builds.apple.tasks.CreateFramework
 import fr.composeplayer.builds.apple.tasks.buildContext
+import fr.composeplayer.builds.apple.utils.BUILD_VERSION
 import fr.composeplayer.builds.apple.utils.DEFAULT_TARGETS
 import fr.composeplayer.builds.apple.utils.execExpectingResult
 import fr.composeplayer.builds.apple.utils.execExpectingSuccess
@@ -13,7 +14,7 @@ plugins {
 }
 
 group = "fr.composeplayer.builds.mpv"
-version = libs.versions.library
+version = BUILD_VERSION
 
 repositories { mavenCentral() }
 kotlin { jvmToolchain(23) }

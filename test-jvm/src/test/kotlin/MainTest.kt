@@ -1,14 +1,15 @@
 import fr.composeplayer.builds.mpv.Main
-import org.junit.jupiter.api.assertDoesNotThrow
 import kotlin.test.Test
+import kotlin.test.assertEquals
 
 class MainTest {
 
   @Test
   fun testMainDoesNotFail() {
-    assertDoesNotThrow {
-      Main.main( emptyArray() )
-    }
+    assertEquals(
+      expected = 131077L,
+      actual = Main.getMpvVersion()
+    )
   }
 
 }
