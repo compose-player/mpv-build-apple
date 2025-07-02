@@ -86,7 +86,7 @@ jobs:
         with:
           files: zips/*.zip
           tag_name: ${{ steps.get_version.outputs.version }}
-          name: ${{ github.ref_name }}
+          name: Version ${{ steps.get_version.outputs.version }}
           body: |
             - Built automatically via GitHub Actions
           draft: true
