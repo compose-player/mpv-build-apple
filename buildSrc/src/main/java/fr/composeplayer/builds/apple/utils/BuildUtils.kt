@@ -336,7 +336,7 @@ fun Project.registerBasicWorkflow(
         this.group = group
         doLast {
           for (framework in dependency.frameworks) {
-            val newName = "@rpath/${framework.frameworkName}"
+            val newName = "@rpath/${framework.frameworkName}.framework/${framework.frameworkName}"
             val file = rootDir.resolve("fat-frameworks/shared/$platform/${framework.frameworkName}.framework")
             val installName = let {
               val result = execExpectingResult {
@@ -368,7 +368,7 @@ fun Project.registerBasicWorkflow(
                   execExpectingSuccess {
                     workingDir = file
                     command = arrayOf(
-                      "install_name_tool", "-change", link, "@rpath/$newName", framework.frameworkName
+                      "install_name_tool", "-change", link, "@rpath/$newName.framework/$newName", framework.frameworkName
                     )
                   }
               }

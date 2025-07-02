@@ -66,7 +66,7 @@ registerBasicWorkflow(
       execExpectingSuccess {
         workingDir = project.rootDir.resolve("fat-frameworks/shared/$platform/Mpv.framework")
         command = arrayOf(
-          "install_name_tool", "-change", "@rpath/libuchardet.0.dylib", "@rpath/Uchardet", "Mpv"
+          "install_name_tool", "-change", "@rpath/libuchardet.0.dylib", "@rpath/Uchardet.framework/Uchardet", "Mpv"
         )
       }
     }

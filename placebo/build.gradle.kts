@@ -39,7 +39,7 @@ registerBasicWorkflow(
       execExpectingSuccess {
         workingDir = project.rootDir.resolve("fat-frameworks/shared/$platform/Placebo.framework")
         command = arrayOf(
-          "install_name_tool", "-change", "@rpath/libshaderc_shared.1.dylib", "@rpath/Shaderc_combined", "Placebo"
+          "install_name_tool", "-change", "@rpath/libshaderc_shared.1.dylib", "@rpath/Shaderc_combined.framework/Shaderc_combined", "Placebo"
         )
       }
     }

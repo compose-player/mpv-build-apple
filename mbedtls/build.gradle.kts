@@ -43,10 +43,10 @@ registerBasicWorkflow(
         }
         for (link in links) {
           val newPath = when {
-            link.startsWith("@rpath/libmbedx509.") -> "@rpath/Mbedx509"
-            link.startsWith("@rpath/libmbedcrypto.") -> "@rpath/Mbedcrypto"
-            link.startsWith("@rpath/libeverest.") -> "@rpath/Everest"
-            link.startsWith("@rpath/libp256m.") -> "@rpath/P256m"
+            link.startsWith("@rpath/libmbedx509.") -> "@rpath/Mbedx509.framework/Mbedx509"
+            link.startsWith("@rpath/libmbedcrypto.") -> "@rpath/Mbedcrypto.framework/Mbedcrypto"
+            link.startsWith("@rpath/libeverest.") -> "@rpath/Everest.framework/Everest"
+            link.startsWith("@rpath/libp256m.") -> "@rpath/P256m.framework/P256m"
             else -> continue
           }
           execExpectingSuccess {
